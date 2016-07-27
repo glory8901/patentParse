@@ -1,0 +1,336 @@
+<root>
+	<baseroot>
+		<basedir class="JP"></basedir>
+		<basedir class="FR"></basedir>
+		<basedir class="DE">H:\20160708</basedir>
+		<basedir class="RU"></basedir>
+		<destdir>D:\数据管理\交换数据解析核对\五局数据解析\号单对比\号单\</destdir>
+	</baseroot>
+
+	<branch>
+		<file-search>
+			<!-- 判断是相对路径还是绝对路径，如果是相对路径，则追加到basedir;否则直接使用该路径 -->
+			<follow-path class="FR">\临时解压文件\FR\Design</follow-path>
+			<!-- '&'表示同时包含的条件,多层查找; '*'表示包含任意一个即可的条件, ';'表示多组查找请求，对应输出多个文件 -->
+			<incdir>FR_FRNEW;FR_FRAMD</incdir>
+			<!-- 排除列表，用*分割 -->
+			<excdir></excdir>
+			<!-- 包含文件列表，用*分割 -->
+			<incfile></incfile>
+			<!-- 排除文件列表，用*分割 -->
+			<excfile></excfile>
+			<!-- 包含扩展名列表，用*分割 -->
+			<extend>.xml</extend>
+			<!-- ';'表示输出多个文件,输出为csv文件 -->
+			<outfile>FR\xml_new.csv;FR\xml_amd.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>xml</filetype>
+			<header>PublicationDate,RegistrationNumber,DesignCurrentStatusCode,ViewNumber
+			</header>
+			<encoding-in>UTF-8</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<rootnode>DesignApplication</rootnode>
+			<!-- 使用";"进行分隔 -->
+			<nodes>PublicationDate;RegistrationNumber;DesignCurrentStatusCode;ViewDetails>View>ViewNumber
+			</nodes>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="FR">\临时解压文件\FR\Design</follow-path>
+			<incdir>FR_FRNEW</incdir>
+			<excdir></excdir>
+			<incfile></incfile>
+			<excfile></excfile>
+			<extend>.xml</extend>
+			<outfile>FR\xml_new_ViewNumber.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>xml</filetype>
+			<header>ViewNumber</header>
+			<encoding-in>UTF-8</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<rootnode>View</rootnode>
+			<!-- 使用";"进行分隔 -->
+			<nodes>ViewNumber</nodes>
+		</text-read>
+	</branch>
+	
+	<branch>
+		<file-search>
+			<follow-path class="FR">\临时解压文件\FR\Design</follow-path>
+			<incdir>dmf_image</incdir>
+			<excdir></excdir>
+			<incfile></incfile>
+			<excfile></excfile>
+			<extend>.jpg</extend>
+			<outfile>FR\path_image_number.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>path</filetype>
+			<header>ViewNumber</header>
+			<encoding-out>GBK</encoding-out>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="RU">\临时解压文件\RU\Design</follow-path>
+			<incdir></incdir>
+			<excdir></excdir>
+			<incfile></incfile>
+			<excfile></excfile>
+			<extend>.xml</extend>
+			<outfile>RU\xml_design.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>xml</filetype>
+			<header>appno,regno,regdate</header>
+			<encoding-in>utf-8</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<rootnode>DesignApplication</rootnode>
+			<nodes>DesignApplicationNumber;RegistrationNumber;RegistrationDate
+			</nodes>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="DE">\临时解压文件\DE\design</follow-path>
+			<incdir>gsm_bib_eing_xml</incdir>
+			<excdir></excdir>
+			<incfile></incfile>
+			<excfile></excfile>
+			<extend>.xml</extend>
+			<outfile>DE\xml_design.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>xml</filetype>
+			<header>RegNum,AppNum,RegDate,FirstPubDate,JPGCount</header>
+			<encoding-in>iso-8859-1</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<rootnode>AKTE</rootnode>
+			<nodes>C_AKTE_REGISTER_NR;C_AKTE_AKTENZEICHEN;C_AKTE_EINTRAGUNGS_TAG;C_AKTE_ERSTER_VEROEFF_TAG;MUSTER_LISTE>MUSTER>C_MUSTER_ANZAHL_DARSTELLUNGEN
+			</nodes>
+		</text-read>
+	</branch>
+	
+	<branch>
+		<file-search>
+			<follow-path class="DE">\临时解压文件\DE\design</follow-path>
+			<incdir>gsm_bib_eing_xml</incdir>
+			<excdir></excdir>
+			<incfile></incfile>
+			<excfile></excfile>
+			<extend>.xml</extend>
+			<outfile>DE\xml_design_AB.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>xml</filetype>
+			<header>RegNum,AppNum,RegDate,FirstPubDate,JPGCount</header>
+			<encoding-in>iso-8859-1</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<rootnode>TEIL[Teil~=Teil A|Teil B]>AKTE</rootnode>
+			<nodes>C_AKTE_REGISTER_NR;C_AKTE_AKTENZEICHEN;C_AKTE_EINTRAGUNGS_TAG;C_AKTE_ERSTER_VEROEFF_TAG;MUSTER_LISTE>MUSTER>C_MUSTER_ANZAHL_DARSTELLUNGEN
+			</nodes>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="DE">\临时解压文件\DE\Design</follow-path>
+			<incdir>gsm_bild_eing</incdir>
+			<excdir></excdir>
+			<incfile></incfile>
+			<excfile></excfile>
+			<extend>.jpg</extend>
+			<outfile>DE\jpg_name.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>path</filetype>
+			<header>jpgname</header>
+			<encoding-out>GBK</encoding-out>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="JP">\临时解压文件\JP</follow-path>
+			<incdir>JP_A;JP_B;JP_U</incdir>
+			<excdir></excdir>
+			<incfile>ABSTRACT.csv</incfile>
+			<excfile></excfile>
+			<extend>.csv</extend>
+			<outfile>JP\jp_a.csv;JP\jp_b.csv;JP\jp_u.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>lst</filetype>
+			<header>"kind","pnfirst","pnlast","count"</header>
+			<encoding-in>EUC_JP</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<firstrow>2</firstrow>
+			<columns>1*2*3*4</columns>
+			<sep>[,〜]</sep>
+			<match>\((.*?)\)</match>
+			<rep>[\s-]</rep>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="JP">\临时解压文件\JP\JP_D</follow-path>
+			<incdir></incdir>
+			<excdir></excdir>
+			<incfile>ABSTRACT.csv</incfile>
+			<excfile></excfile>
+			<extend>.csv</extend>
+			<outfile>JP\jp_d.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>lst</filetype>
+			<header>"kind","pnfirst","pnlast","count"</header>
+			<encoding-in>EUC_JP</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<firstrow>5</firstrow>
+			<columns>3*4*5*6</columns>
+			<sep>[,〜]</sep>
+			<match></match>
+			<rep>[\s]</rep>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="JP">\临时解压文件\JP</follow-path>
+			<incdir>DOCUMENT\A;DOCUMENT\S;DOCUMENT\T;DOCUMENT\B9;DOCUMENT\U9
+			</incdir>
+			<excdir>A5*S5*T5</excdir>
+			<incfile>CONTENTS2.csv</incfile>
+			<excfile></excfile>
+			<extend>.csv</extend>
+			<outfile>JP\raw_jpa_a.csv;JP\raw_jpa_s.csv;JP\raw_jpa_t.csv;JP\raw_jpb_b9.csv;JP\raw_jpu_u9.csv
+			</outfile>
+		</file-search>
+		<text-read>
+			<filetype>lst</filetype>
+			<header>"pubno","appno"</header>
+			<encoding-in>EUC_JP</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<firstrow>1</firstrow>
+			<columns>3*4</columns>
+			<sep>,</sep>
+			<match></match>
+			<rep>\D(-0)?</rep>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="JP">\临时解压文件\JP\JP_D</follow-path>
+			<incdir>DOCUMENT\DG</incdir>
+			<excdir></excdir>
+			<incfile>CONTENTS.CSV</incfile>
+			<excfile></excfile>
+			<extend>.csv</extend>
+			<outfile>JP\raw_jpd_DG.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>lst</filetype>
+			<header>"regnum"</header>
+			<encoding-in>EUC_JP</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<firstrow>3</firstrow>
+			<columns>2</columns>
+			<sep>,</sep>
+			<match></match>
+			<rep></rep>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="JP">\临时解压文件\JP\JP_D</follow-path>
+			<incdir>DG</incdir>
+			<excdir>DGC*DD</excdir>
+			<incfile></incfile>
+			<excfile>GAZETTE.SGM</excfile>
+			<extend>.sgm</extend>
+			<outfile>JP\sgm_jpd_DG.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>sgm</filetype>
+			<header>"pubcountry","pubdate","kind","regnum","rawkind"</header>
+			<encoding-in>EUC_JP</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<labels>PUBLICATION-COUNTRY*PUBLICATION-DATE*KIND-OF-OFFICIAL-GAZETTE*REGISTRATION-NUMBER
+			</labels>
+			<date-label>pubdate</date-label>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="JP">\临时解压文件\JP\JP_D</follow-path>
+			<incdir>DD</incdir>
+			<excdir>DGC*DG</excdir>
+			<incfile></incfile>
+			<excfile>GAZETTE.SGM</excfile>
+			<extend>.sgm</extend>
+			<outfile>JP\sgm_jpd_DD.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>sgm</filetype>
+			<header>"pubcountry","pubdate","kind","appnum","rawkind"</header>
+			<encoding-in>EUC_JP</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<labels>PUBLICATION-COUNTRY*PUBLICATION-DATE*KIND-OF-OFFICIAL-GAZETTE*APPLICATION-NUMBER
+			</labels>
+			<date-label>pubdate</date-label>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="JP">\临时解压文件\JP\JP_D</follow-path>
+			<incdir>DGC</incdir>
+			<excdir></excdir>
+			<incfile></incfile>
+			<excfile>GAZETTE.SGM</excfile>
+			<extend>.sgm</extend>
+			<outfile>JP\sgm_jpd_DGC.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>sgm</filetype>
+			<header>"pubcountry","pubdate","kind","regnum","rawkind"</header>
+			<encoding-in>EUC_JP</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<labels>PUBLICATION-COUNTRY*PUBLICATION-DATE*KIND-OF-OFFICIAL-GAZETTE*REGISTRATION-NUMBER
+			</labels>
+			<date-label>pubdate</date-label>
+		</text-read>
+	</branch>
+
+	<branch>
+		<file-search>
+			<follow-path class="JP">\临时解压文件\JP\JP_D</follow-path>
+			<incdir></incdir>
+			<excdir></excdir>
+			<incfile></incfile>
+			<excfile>GAZETTE.SGM</excfile>
+			<extend>.sgm</extend>
+			<outfile>JP\sgm_jpd_all.csv</outfile>
+		</file-search>
+		<text-read>
+			<filetype>sgm</filetype>
+			<header>"pubcountry","pubdate","kind","regnum","rawkind"</header>
+			<encoding-in>EUC_JP</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<labels>PUBLICATION-COUNTRY*PUBLICATION-DATE*KIND-OF-OFFICIAL-GAZETTE*REGISTRATION-NUMBER
+			</labels>
+			<date-label>pubdate</date-label>
+		</text-read>
+	</branch>
+
+</root>

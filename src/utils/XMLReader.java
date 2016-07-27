@@ -10,64 +10,46 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import fiveIPOs.XML;
 import utils.file.FileUtils;
 
 public class XMLReader {
-
-	public static void main(String[] args) {
-		try {
-			XMLReader reader = new XMLReader();
-			String filename = "C:\\Users\\Lenovo\\Desktop\\FR_FRAMDST86_2016-11_0001.xml";
-			List<String> resultList = reader.readLines(filename,
-					"DesignApplication", "PublicationDate",
-					"RegistrationNumber", "DesignCurrentStatusCode",
-					"ViewDetails>View>ViewNumber");
-			reader.writexml(resultList,"C:\\Users\\Lenovo\\Desktop\\xml_amd.csv");
-			
-			filename = "C:\\Users\\Lenovo\\Desktop\\FR_FRNEWST86_2016-11_0001.xml";
-			resultList = reader.readLines(filename,
-					"DesignApplication", "PublicationDate",
-					"RegistrationNumber", "DesignCurrentStatusCode",
-					"ViewDetails>View>ViewNumber");
-			reader.writexml(resultList,"C:\\Users\\Lenovo\\Desktop\\xml_new.csv");
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void readXmlAndWrite(List<File> xmlFiles, String outName,
-			String rootName, String... arguments)
+	public void readXml(List<File> xmlFiles, XML xml, String outName)
 			throws Exception {
-		XMLReader reader = new XMLReader();
+		String header = xml.getHeader();
+		String encodingin = xml.getEncodingin();
+		String encodingout = xml.getEncodingout();
+		String rootName = xml.getRootnode();
+		String[] arguments = xml.getNodes().split(";");
 		List<String> resultList = new ArrayList<String>();
-		
+
 		// 将标题加入list中
-		List<String> headers = new ArrayList<String>();
-		for (String nodeName : arguments) {
-			headers.add(nodeName.substring(nodeName.lastIndexOf(">") == -1 ? 0
-					: nodeName.lastIndexOf(">") + 1));
+		resultList.add(header);
+
+		// 如果找不到文件，报错
+		if (xmlFiles == null || xmlFiles.size() == 0) {
+			System.err.println("找不到对应的xml文件:");
+			writexml(resultList, outName, encodingout);
+			return;
 		}
-		resultList.add(StringUtils.join(headers, ",", null));
-		
+
 		// 遍历每一个xml文件，并将结果保存到list中
 		for (File eachXml : xmlFiles) {
-			List<String> oneResult = reader.readLines(eachXml.getAbsolutePath(), rootName,
-					arguments);
+			List<String> oneResult = readLines(eachXml.getAbsolutePath(),
+					encodingin, rootName, arguments);
 			resultList.addAll(oneResult);
 		}
-		reader.writexml(resultList, outName);
+		writexml(resultList, outName, encodingout);
 	}
-	
-	public List<String> readLines(String xmlName, String rootName,
-			String... nodenameArr) throws Exception {
 
+	public static List<String> readLines(String xmlName, String encoding,
+			String rootName, String... nodenameArr) throws Exception {
 		List<String> resultList = new ArrayList<String>();
 		String sep = ";";
 
 		// read xml
 		File file = new File(xmlName);
-		Document doc = Jsoup.parse(file, "utf-8");
+		Document doc = Jsoup.parse(file, encoding);
 		Elements daEls = doc.select(rootName);
 		for (Element xmlrow : daEls) {
 			List<String> lineList = new ArrayList<String>();
@@ -75,7 +57,7 @@ public class XMLReader {
 				Elements nodeEls = xmlrow.select(nodeName);
 				if (nodeEls.size() == 0) {
 					lineList.add("-");
-				} else if (nodeEls.size() <= 1) {
+				} else if (nodeEls.size() == 1) {
 					lineList.add(nodeEls.get(0).ownText());
 				} else {
 					String multivalue = "";
@@ -91,12 +73,12 @@ public class XMLReader {
 		return resultList;
 	}
 
-	public void writexml(List<String> resultList, String outFileName)
-			throws IOException {
+	public static void writexml(List<String> resultList, String outFileName,
+			String encoding) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		for (String text : resultList) {
 			sb.append(text + "\r\n");
 		}
-		FileUtils.write(outFileName, sb.toString(), "gbk");
+		FileUtils.write(outFileName, sb.toString(), encoding);
 	}
 }

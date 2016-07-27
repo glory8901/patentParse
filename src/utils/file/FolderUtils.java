@@ -1,6 +1,7 @@
 package utils.file;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,10 +17,13 @@ import org.jsoup.select.Elements;
  */
 public class FolderUtils {
 
-	public static List<File> getFiles(String path) {
+	public static List<File> getFiles(String path) throws FileNotFoundException {
 		// 获取该层目录下的所有文件
 		List<File> files = new ArrayList<File>();
 		File basefile = new File(path);
+		if (!basefile.exists()) {
+			throw new FileNotFoundException(path + " 文件夹不存在\n");
+		}
 		File[] subFileArr = basefile.listFiles();
 		// System.out.println("该目录下对象个数：" + subFileArr.length);
 
@@ -31,10 +35,14 @@ public class FolderUtils {
 		return files;
 	}
 
-	public static List<File> getFolders(String path) {
+	public static List<File> getFolders(String path)
+			throws FileNotFoundException {
 		// 获取该层目录下的所有文件夹
 		List<File> folders = new ArrayList<File>();
 		File basefile = new File(path);
+		if (!basefile.exists()) {
+			throw new FileNotFoundException(path + " 文件夹不存在");
+		}
 		File[] subFileArr = basefile.listFiles();
 		// System.out.println("该目录下对象个数：" + subFileArr.length);
 
@@ -51,7 +59,12 @@ public class FolderUtils {
 		List<File> outFileList = new ArrayList<File>();
 		for (File folder : folderList) {
 			String folderName = folder.getAbsolutePath();
-			outFileList.addAll(getFiles(folderName));
+			try {
+				outFileList.addAll(getFiles(folderName));
+			} catch (FileNotFoundException e) {
+				System.out.println("列表中部分文件夹不存在：" + folder);
+				continue;
+			}
 		}
 		return outFileList;
 	}

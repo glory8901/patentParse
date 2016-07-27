@@ -13,8 +13,8 @@ public class FilesFilter {
 		for (File file : fileList) {
 			String fileName = file.getAbsolutePath();
 			// 是否保留与是否删除
-			boolean ifRetain = contains(fileName, containsName);
-			boolean ifExclude = exclude(fileName, excludeName);
+			boolean ifRetain = contains(fileName, containsName);//或的关系，包含其中一个即可
+			boolean ifExclude = exclude(fileName, excludeName);//与的关系，出现在列表中的都要排除
 			if (ifRetain && !ifExclude) {
 				out.add(file);
 			}

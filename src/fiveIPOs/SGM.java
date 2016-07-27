@@ -5,20 +5,24 @@ public class SGM {
 	private String pubdate;
 	private String kind;
 	private String regnum;
-	private String datatype;
-	
-	private String excdir;
-	private String excfile;
-	private String incdir;
-	private String incfile;
 
 	private String header;
-	private String outfile;
 	private String encodingin;
 	private String encodingout;
 	private String labels;
 	private String dateLabel;
 
+	public SGM(String country, String pubdate, String kind, String regnum) {
+		super();
+		this.country = country;
+		this.pubdate = pubdate;
+		this.kind = kind;
+		this.regnum = regnum;
+	}
+
+	public SGM() {
+		super();
+	}
 
 	public String getCountry() {
 		return country;
@@ -52,28 +56,12 @@ public class SGM {
 		this.regnum = regnum;
 	}
 
-	public String getDatatype() {
-		return datatype;
-	}
-
-	public void setDatatype(String datatype) {
-		this.datatype = datatype;
-	}
-
 	public String getHeader() {
 		return header;
 	}
 
 	public void setHeader(String header) {
 		this.header = header;
-	}
-
-	public String getOutfile() {
-		return outfile;
-	}
-
-	public void setOutfile(String outfile) {
-		this.outfile = outfile;
 	}
 
 	public String getEncodingin() {
@@ -106,52 +94,6 @@ public class SGM {
 
 	public void setDateLabel(String dateLabel) {
 		this.dateLabel = dateLabel;
-	}
-
-	public SGM(String country, String pubdate, String kind, String regnum) {
-		super();
-		this.country = country;
-		this.pubdate = pubdate;
-		this.kind = kind;
-		this.regnum = regnum;
-	}
-
-	
-	
-	public String getExcdir() {
-		return excdir;
-	}
-
-	public void setExcdir(String excdir) {
-		this.excdir = excdir;
-	}
-
-	public String getExcfile() {
-		return excfile;
-	}
-
-	public void setExcfile(String excfile) {
-		this.excfile = excfile;
-	}
-
-	public String getIncdir() {
-		return incdir;
-	}
-
-	public void setIncdir(String incdir) {
-		this.incdir = incdir;
-	}
-
-	public String getIncfile() {
-		return incfile;
-	}
-
-	public void setIncfile(String incfile) {
-		this.incfile = incfile;
-	}
-
-	public SGM() {
-		super();
 	}
 
 }

@@ -1,6 +1,7 @@
 package utils.file;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -59,9 +60,13 @@ public class FolderRecursion {
 		}
 	}
 
-	public static List<File> getAllFoldersList(String folderPath) {
+	public static List<File> getAllFoldersList(String folderPath) throws FileNotFoundException {
 		// 遍历文件夹，获得子文件夹的列表
 		File basePath = new File(folderPath);
+		// 如果搜索的文件夹不存在，则直接返回
+		if(!basePath.exists()){
+			throw new FileNotFoundException(folderPath + " 不存在");
+		}
 		List<File> folderList = new ArrayList<File>();
 		// add root path
 		folderList.add(basePath);

@@ -1,11 +1,7 @@
 package fiveIPOs;
 
 public class NumberLst {
-	private String country;
-	private String datatype;
-	private String strFound;
 	private String header;
-	private String outfile;
 	private String encodingin;
 	private String encodingout;
 	private String firstrow;
@@ -14,43 +10,11 @@ public class NumberLst {
 	private String re;
 	private String rep;
 	
-	
-
-	public String getRe() {
-		return re;
-	}
-	public void setRe(String re) {
-		this.re = re;
-	}
-	public String getCountry() {
-		return country;
-	}
-	public void setCountry(String country) {
-		this.country = country;
-	}
-	public String getDatatype() {
-		return datatype;
-	}
-	public void setDatatype(String datatype) {
-		this.datatype = datatype;
-	}
-	public String getStrFound() {
-		return strFound;
-	}
-	public void setStrFound(String strFound) {
-		this.strFound = strFound;
-	}
 	public String getHeader() {
 		return header;
 	}
 	public void setHeader(String header) {
 		this.header = header;
-	}
-	public String getOutfile() {
-		return outfile;
-	}
-	public void setOutfile(String outfile) {
-		this.outfile = outfile;
 	}
 	public String getEncodingin() {
 		return encodingin;
@@ -81,6 +45,12 @@ public class NumberLst {
 	}
 	public void setSep(String sep) {
 		this.sep = sep;
+	}
+	public String getRe() {
+		return re;
+	}
+	public void setRe(String re) {
+		this.re = re;
 	}
 	public String getRep() {
 		return rep;
