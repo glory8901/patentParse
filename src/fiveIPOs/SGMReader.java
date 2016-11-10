@@ -16,12 +16,13 @@ import utils.file.FileUtils;
 
 public class SGMReader {
 	public static void readSGM(List<File> allFiles, SGM onesgm, String outname)
-			throws IllegalArgumentException, IllegalAccessException, IOException {
+			throws IllegalArgumentException, IllegalAccessException,
+			IOException {
 		// 处理一个配置
 		String parseColumns = onesgm.getLabels();
 		String dateColumn = onesgm.getDateLabel();
 		String encodingin = onesgm.getEncodingin();
-		
+
 		// 输出结果
 		StringBuffer sb = new StringBuffer();
 		sb.append(onesgm.getHeader() + "\r\n");
@@ -97,19 +98,30 @@ public class SGMReader {
 	public static SGM parse(File sgmfile, String encoding, String parseColumns) {
 		SGM sgm = null;
 		String[] parseColumnArr = parseColumns.split("\\*");
+		String[] nodes = new String[parseColumnArr.length];
+		Document sgmDoc = null;
 		try {
-			Document sgmDoc = Jsoup.parse(sgmfile, encoding);
-			String country = sgmDoc.select(parseColumnArr[0]).text();
-			String pubdate = sgmDoc.select(parseColumnArr[1]).text();
-			String kind = sgmDoc.select(parseColumnArr[2]).text();
-			String regnum = sgmDoc.select(parseColumnArr[3]).text();
-			// line
-			sgm = new SGM(Converter.ToDBC(country), Converter.ToDBC(pubdate),
-					Converter.ToDBC(kind), Converter.ToDBC(regnum));
+			sgmDoc = Jsoup.parse(sgmfile, encoding);
 		} catch (Exception e) {
-			System.out.println("read sgm fail:" + sgmfile.getName());
+			System.out.println("sgm read fail:" + sgmfile.getName());
 			e.printStackTrace();
 		}
+		for (int i = 0; i < parseColumnArr.length; i++) {
+			try {
+				nodes[i] = Converter.ToDBC(sgmDoc.select(parseColumnArr[i])
+						.get(0).ownText());
+			} catch (Exception e) {
+				nodes[i] = "";
+			}
+		}
+
+		String country = nodes[0];
+		String pubdate = nodes[1];
+		String kind = nodes[2];
+		String regnum = nodes[3];
+
+		// get line
+		sgm = new SGM(country, pubdate, kind, regnum);
 		return sgm;
 	}
 }

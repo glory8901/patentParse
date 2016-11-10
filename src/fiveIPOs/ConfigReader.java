@@ -39,14 +39,23 @@ public class ConfigReader {
 		// 选择branch的各个部分
 		Elements branchs = doc.select("branch");
 		for (Element branch : branchs) {
-			Element fileSearchArgs = branch.select("file-search").get(0);
-			Element textReadArgs = branch.select("text-read").get(0);
+			Element fileSearchArgs = branch.select("file-search").get(0);//只能有一个
+			Elements typeReaderArgs = branch.select("text-read");
 
 			Map<String, List<File>> map = getFileArgs(fileSearchArgs, base);
 			if (map == null) {
 				continue;
 			}
-			readfile(map, textReadArgs, destDir);
+			// read by filetype
+			readByType(map, typeReaderArgs, destDir);
+		}
+	}
+
+	public static void readByType(Map<String, List<File>> map,
+			Elements typeReaderArgs, String destDir) throws Exception {
+		for (Element typeArg : typeReaderArgs) {
+			String filetype = typeArg.select("filetype").text();
+			readfile(map, typeArg, filetype, destDir);
 		}
 	}
 
@@ -135,8 +144,7 @@ public class ConfigReader {
 	}
 
 	public static void readfile(Map<String, List<File>> map, Element readArgs,
-			String destDir) throws Exception {
-		String filetype = readArgs.select("filetype").text();
+			String filetype, String destDir) throws Exception {
 		if (filetype.toLowerCase().equals("xml")) {
 			System.out.println("开始读取xml");
 			readXML(map, readArgs, destDir);
@@ -154,6 +162,10 @@ public class ConfigReader {
 			readPATH(map, readArgs, destDir);
 			System.out.println("结束读取path\n");
 		}
+	}
+
+	public static void readNRM() {
+
 	}
 
 	public static void readPATH(Map<String, List<File>> map, Element readArgs,
