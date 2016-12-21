@@ -1,4 +1,4 @@
-package fiveIPOs;
+package reader;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,11 +13,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import utils.XMLReader;
+import typeobj.NumberLst;
+import typeobj.SGM;
+import typeobj.XML;
 import utils.file.FileUtils;
 import utils.file.FilesFilter;
-import utils.file.FolderRecursion;
-import utils.file.FolderUtils;
+import utils.folder.FolderRecursion;
+import utils.folder.FolderUtils;
 
 public class ConfigReader {
 	public void loadConfig(String confxml) throws Exception {

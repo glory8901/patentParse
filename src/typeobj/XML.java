@@ -1,4 +1,4 @@
-package fiveIPOs;
+package typeobj;
 
 public class XML {
 	private String header;

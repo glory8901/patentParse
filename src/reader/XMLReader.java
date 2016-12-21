@@ -1,4 +1,4 @@
-package utils;
+package reader;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,7 +10,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import fiveIPOs.XML;
+import typeobj.XML;
+import utils.StringUtils;
 import utils.file.FileUtils;
 
 public class XMLReader {

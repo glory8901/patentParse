@@ -6,13 +6,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class ISOUtils {
-	public static void openISO(String isopath) {
-		String cmd = String.format("C:\\Program Files\\DAEMON Tools Lite\\DTAgent.exe -mount dt,0,\"%s\"", isopath);
+	public static void openISO(String mountisodir,String isopath) {
+		String cmd = String.format(mountisodir + "\\DTAgent.exe -mount dt,0,\"%s\"", isopath);
 		execCMD(cmd);
 	}
 
-	public static void closeISO() {
-		String cmd = "C:\\Program Files\\DAEMON Tools Lite\\DTAgent.exe -unmount_all";
+	public static void closeISO(String mountisodir) {
+		String cmd = mountisodir + "\\DTAgent.exe -unmount_all";
 		execCMD(cmd);
 	}
 

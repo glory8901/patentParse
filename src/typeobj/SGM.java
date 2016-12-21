@@ -1,4 +1,4 @@
-package fiveIPOs;
+package typeobj;
 
 public class SGM {
 	private String country;

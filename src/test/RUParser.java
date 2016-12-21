@@ -1,4 +1,4 @@
-package fiveIPOs;
+package test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,15 +16,17 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import utils.file.ISOUtils;
-import utils.file.MyFileVisitor;
+import utils.folder.MyFileVisitor;
 
-public class NRMParser {
+public class RUParser {
 	private static String basedir;
+	private static String mountisodir;
+	private static String disk;
 
 	public static void main(String[] args) {
 		try {
-			NRMParser nparser = new NRMParser();
-			Elements typeReaderArgs = nparser.loadConfig("test.xml");
+			RUParser nparser = new RUParser();
+			Elements typeReaderArgs = nparser.loadConfig("ru_check.xml");
 			List<String> allISOList = nparser.getAllISO();
 			nparser.readISO(allISOList, typeReaderArgs);
 		} catch (Exception e) {
@@ -36,6 +38,7 @@ public class NRMParser {
 		List<String> allFilesList = null;
 		try {
 			allFilesList = getFileList(basedir, ".iso");
+
 			System.out.println("ISO:" + allFilesList.size());
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -43,14 +46,20 @@ public class NRMParser {
 		return allFilesList;
 	}
 
-	public void readISO(List<String> allFilesList,
-			Elements typeReaderArgs) {
+	public void readISO(List<String> allFilesList, Elements typeReaderArgs) {
 		// 遍历每一个ISO文件
-		for (String f : allFilesList) {
+		for (String isoFilePath : allFilesList) {
 			try {
-				openISOReadFile(f, "H:\\", ".NRM*.XML", typeReaderArgs);
+				// close iso
+				ISOUtils.closeISO(mountisodir);
+				// open iso
+				ISOUtils.openISO(mountisodir, isoFilePath);
+				// read xmls
+				System.out.println(String
+						.format("opening ISO:%s.", isoFilePath));
+				openISOReadFile(isoFilePath, disk, ".NRM*.XML", typeReaderArgs);
 			} catch (IOException e) {
-				System.err.println(f + ":" + e.getMessage());
+				System.err.println(isoFilePath + ":" + e.getMessage());
 				continue;
 			}
 		}
@@ -71,6 +80,8 @@ public class NRMParser {
 		// 选取xml中的base部分的标签
 		Elements base = doc.select("basedir");
 		basedir = base.get(0).ownText();
+		disk = doc.select("disk").get(0).ownText();
+		mountisodir = doc.select("ISO").get(0).ownText();
 
 		// 选择branch的各个部分
 		Element branch = doc.select("branch").get(0);
@@ -79,14 +90,10 @@ public class NRMParser {
 	}
 
 	public static void openISOReadFile(String isopath, String ISODiskLabel,
-			String lookingForFileExts, Elements typeReaderArgs)
+			String lookingForExtsFiles, Elements typeReaderArgs)
 			throws IOException {
-		// close iso
-		ISOUtils.closeISO();
-		// open iso
-		ISOUtils.openISO(isopath);
 		// get all xmls
-		List<String> fileList = getFileList(ISODiskLabel, lookingForFileExts);
+		List<String> fileList = getFileList(ISODiskLabel, lookingForExtsFiles);
 		System.out.println(String.format("current ISO:%s,XML:%d", isopath,
 				fileList.size()));
 		// get all xml content
@@ -103,7 +110,9 @@ public class NRMParser {
 			} else if (file.toLowerCase().endsWith(".nrm")) {
 				line = readTypeFile(file, "nrm", typeReaderArgs);
 			}
-			xmlDocList.add(line);
+			if (line != null) {
+				xmlDocList.add(line);
+			}
 		}
 		// outpath
 		String outname = new File(isopath).getName();
@@ -143,24 +152,24 @@ public class NRMParser {
 		return null;
 	}
 
-	public static String parse(File nrmfile, String encoding,
+	public static String parse(File xmlfile, String encoding,
 			String parseColumns, String existColumns) {
 		List<String> outline = new ArrayList<String>();
 		Document doc = null;
 		try {
-			doc = Jsoup.parse(nrmfile, encoding);
+			doc = Jsoup.parse(xmlfile, encoding);
 		} catch (Exception e) {
-			System.out.println("Parse Fail:" + nrmfile.getName());
-			e.printStackTrace();
+			System.err.println("Parse Fail:" + xmlfile.getAbsolutePath());
+			return null;
 		}
 		outline.addAll(textvalue(doc, parseColumns));
 		outline.addAll(existvalue(doc, existColumns));
+		outline.add(xmlfile.getAbsolutePath());
 		// System.out.println(join(outline, ","));
 		return join(outline, ",");
 	}
 
-	public static String join(@SuppressWarnings("rawtypes") List<String> list,
-			String sep) {
+	public static String join(List<String> list, String sep) {
 		// python join
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < list.size(); i++) {
@@ -183,7 +192,12 @@ public class NRMParser {
 				if (nodeelements.size() == 0) {
 					result.add("0");
 				} else {
-					result.add("1");
+					String nodeText = nodeelements.text();
+					if (nodeText == null || "".equals(nodeText)) {
+						result.add("0");
+					} else {
+						result.add("1");
+					}
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

@@ -1,4 +1,4 @@
-package fiveIPOs;
+package reader;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import typeobj.SGM;
 import utils.Converter;
 import utils.StringUtils;
 import utils.file.FileUtils;

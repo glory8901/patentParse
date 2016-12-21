@@ -1,6 +1,8 @@
-package fiveIPOs;
+package ent;
 
-public class MainPortal {
+import reader.ConfigReader;
+
+public class UpdateParserPortal {
 	public static void main(String[] args) {
 		ConfigReader reader = new ConfigReader();
 		try {

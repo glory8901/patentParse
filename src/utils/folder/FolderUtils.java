@@ -1,4 +1,4 @@
-package utils.file;
+package utils.folder;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -11,6 +11,8 @@ import java.util.Set;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+
+import utils.file.FileProperties;
 
 /*
  * 单层文件夹：查看文件，获得文件集合，对比两个文件夹内容

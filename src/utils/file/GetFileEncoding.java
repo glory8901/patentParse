@@ -1,4 +1,4 @@
-package utils;
+package utils.file;
 
 import info.monitorenter.cpdetector.io.ASCIIDetector;
 import info.monitorenter.cpdetector.io.ByteOrderMarkDetector;

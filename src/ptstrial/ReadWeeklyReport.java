@@ -10,8 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import reader.ExcelReader;
 import utils.CSVUtils;
-import utils.ExcelReader;
 
 public class ReadWeeklyReport {
 	public List<String> loadconfig() {
