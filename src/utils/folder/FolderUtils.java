@@ -19,9 +19,10 @@ import utils.file.FileProperties;
  */
 public class FolderUtils {
 
-	public static List<File> getFiles(String path) throws FileNotFoundException {
+	public static List<String> getFiles(String path)
+			throws FileNotFoundException {
 		// 获取该层目录下的所有文件
-		List<File> files = new ArrayList<File>();
+		List<String> files = new ArrayList<String>();
 		File basefile = new File(path);
 		if (!basefile.exists()) {
 			throw new FileNotFoundException(path + " 文件夹不存在\n");
@@ -31,7 +32,7 @@ public class FolderUtils {
 
 		for (File file : subFileArr) {
 			if (file.isFile()) {
-				files.add(file);
+				files.add(file.getAbsolutePath());
 			}
 		}
 		return files;
@@ -56,15 +57,14 @@ public class FolderUtils {
 		return folders;
 	}
 
-	public static List<File> getFiles(List<File> folderList) {
+	public static List<String> getFiles(List<String> folderList) {
 		// 获取一系列文件夹中根目录下的文件
-		List<File> outFileList = new ArrayList<File>();
-		for (File folder : folderList) {
-			String folderName = folder.getAbsolutePath();
+		List<String> outFileList = new ArrayList<String>();
+		for (String folderName : folderList) {
 			try {
 				outFileList.addAll(getFiles(folderName));
 			} catch (FileNotFoundException e) {
-				System.out.println("列表中部分文件夹不存在：" + folder);
+				System.out.println("列表中部分文件夹不存在：" + folderName);
 				continue;
 			}
 		}

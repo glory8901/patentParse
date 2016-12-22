@@ -60,22 +60,23 @@ public class FolderRecursion {
 		}
 	}
 
-	public static List<File> getAllFoldersList(String folderPath) throws FileNotFoundException {
+	public static List<String> getAllFoldersList(String folderPath)
+			throws FileNotFoundException {
 		// 遍历文件夹，获得子文件夹的列表
 		File basePath = new File(folderPath);
 		// 如果搜索的文件夹不存在，则直接返回
-		if(!basePath.exists()){
+		if (!basePath.exists()) {
 			throw new FileNotFoundException(folderPath + " 不存在");
 		}
-		List<File> folderList = new ArrayList<File>();
+		List<String> folderList = new ArrayList<String>();
 		// add root path
-		folderList.add(basePath);
+		folderList.add(folderPath);
 		// walk
 		walkForFolders(folderPath, folderList);
 		return folderList;
 	}
 
-	public static void walkForFolders(String path, List<File> folderList) {
+	public static void walkForFolders(String path, List<String> folderList) {
 		// 遍历得到文件夹中的所有子文件夹
 		File root = new File(path);
 		if (root.exists()) {
@@ -85,26 +86,25 @@ public class FolderRecursion {
 			} else {
 				for (File file : rootFiles) {
 					if (file.isDirectory()) {
-						folderList.add(file);
-						walkForFolders(file.getAbsolutePath(),folderList);
+						folderList.add(file.getAbsolutePath());
+						walkForFolders(file.getAbsolutePath(), folderList);
 					}
 				}
 			}
 		}
 	}
-	
-	public static List<File> getAllFilesList(String folderPath) {
+
+	public static List<String> getAllFilesList(String folderPath) {
 		// 遍历文件夹，获得所有文件的列表
-		File basePath = new File(folderPath);
-		List<File> fileList = new ArrayList<File>();
+		List<String> fileList = new ArrayList<String>();
 		// add root path
-		fileList.add(basePath);
+		fileList.add(folderPath);
 		// walk
 		walkForFiles(folderPath, fileList);
 		return fileList;
 	}
-	
-	public static void walkForFiles(String path, List<File> fileList) {
+
+	public static void walkForFiles(String path, List<String> fileList) {
 		// 遍历得到文件夹中所有的文件
 		File root = new File(path);
 		if (root.exists()) {
@@ -115,8 +115,8 @@ public class FolderRecursion {
 				for (File file : rootFiles) {
 					// 只添加文件
 					if (file.isFile()) {
-						fileList.add(file);
-						walkForFolders(file.getAbsolutePath(),fileList);
+						fileList.add(file.getAbsolutePath());
+						walkForFolders(file.getAbsolutePath(), fileList);
 					}
 				}
 			}

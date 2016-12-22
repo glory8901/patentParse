@@ -11,7 +11,7 @@ import typeobj.NumberLst;
 import utils.file.FileUtils;
 
 public class LstReader {
-	public static void read(List<File> allFiles, NumberLst numLst,
+	public static void read(List<String> allFiles, NumberLst numLst,
 			String outname) throws IOException {
 		// 从对象中获取各变量的数值
 		String header = numLst.getHeader();
@@ -35,9 +35,8 @@ public class LstReader {
 		}
 
 		// 如果找到文件列表，则对所有的文件读取号单
-		for (File f : allFiles) {
+		for (String filePath : allFiles) {
 			// 对每一个文件，读取内容并输出为号单
-			String filePath = f.getAbsolutePath();
 
 			// 读取号单并写入文件中
 			sb.append(readlst(filePath, encodingin, firstrow, columns, sep,

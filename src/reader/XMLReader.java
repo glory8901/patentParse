@@ -15,63 +15,120 @@ import utils.StringUtils;
 import utils.file.FileUtils;
 
 public class XMLReader {
-	public void readXml(List<File> xmlFiles, XML xml, String outName)
+	public void readXml(List<String> xmlFiles, XML xml, String outName)
 			throws Exception {
 		String header = xml.getHeader();
 		String encodingin = xml.getEncodingin();
 		String encodingout = xml.getEncodingout();
 		String rootName = xml.getRootnode();
-		String[] arguments = xml.getNodes().split(";");
-		List<String> resultList = new ArrayList<String>();
+		String textNodes = xml.getTextnodes();
+		String existNodes = xml.getExistNodes();
+		List<String> lineList = new ArrayList<String>();
 
 		// 将标题加入list中
-		resultList.add(header);
+		lineList.add(header);
 
 		// 如果找不到文件，报错
 		if (xmlFiles == null || xmlFiles.size() == 0) {
 			System.err.println("找不到对应的xml文件:");
-			writexml(resultList, outName, encodingout);
+			writexml(lineList, outName, encodingout);
 			return;
 		}
 
 		// 遍历每一个xml文件，并将结果保存到list中
-		for (File eachXml : xmlFiles) {
-			List<String> oneResult = readLines(eachXml.getAbsolutePath(),
-					encodingin, rootName, arguments);
-			resultList.addAll(oneResult);
+
+		for (String eachXml : xmlFiles) {
+			// 读取每一个xml，并将结果存入linelist中
+			List<String> textValue = getNodeText(eachXml, encodingin, rootName,
+					textNodes, existNodes);
+			lineList.addAll(textValue);
 		}
-		writexml(resultList, outName, encodingout);
+		writexml(lineList, outName, encodingout);
 	}
 
-	public static List<String> readLines(String xmlName, String encoding,
-			String rootName, String... nodenameArr) throws Exception {
-		List<String> resultList = new ArrayList<String>();
+	public static List<String> getNodeText(String xmlFile, String encoding,
+			String rootName, String textnodes, String existnodes) {
+		// 用于存放结果
+		List<String> allValues = new ArrayList<String>();
+		// 多值的分割符
 		String sep = ";";
+		String[] textNodesArr = textnodes.split("\\*");
+		// 读取xml文件
+		Document doc = null;
+		try {
+			doc = Jsoup.parse(new File(xmlFile), encoding);
+		} catch (Exception e) {
+			System.err.println("Parse Fail:" + xmlFile);
+		}
 
-		// read xml
-		File file = new File(xmlName);
-		Document doc = Jsoup.parse(file, encoding);
 		Elements daEls = doc.select(rootName);
+		// 每一行xml
 		for (Element xmlrow : daEls) {
 			List<String> lineList = new ArrayList<String>();
-			for (String nodeName : nodenameArr) {
+			for (String nodeName : textNodesArr) {
 				Elements nodeEls = xmlrow.select(nodeName);
 				if (nodeEls.size() == 0) {
-					lineList.add("-");
+					// 无值
+					lineList.add("--");
 				} else if (nodeEls.size() == 1) {
+					// 单值
 					lineList.add(nodeEls.get(0).ownText());
 				} else {
-					String multivalue = "";
+					// 多值
+					List<String> itemArr = new ArrayList<String>();
 					for (Element node : nodeEls) {
-						multivalue += node.ownText() + sep;
+						itemArr.add(node.ownText());
 					}
-					lineList.add(multivalue.replaceAll(sep + "$", "").trim());
+					lineList.add(StringUtils.join(itemArr, sep));
 				}
 			}
+			List<String> existValue = existvalue(xmlrow, existnodes);
+			lineList.addAll(existValue);
+			lineList.add(xmlFile);
 			// 将行join为字符串
-			resultList.add(StringUtils.join(lineList, ",", null));
+			allValues.add(StringUtils.join(lineList, "\t", '"'));
 		}
-		return resultList;
+		return allValues;
+	}
+
+	/**
+	 * 
+	 * @param doc
+	 * @param parseColumns
+	 * @return
+	 */
+	public static List<String> existvalue(Element doc, String parseColumns) {
+		String[] parseColumnArr = parseColumns.split("\\*");
+		List<String> result = new ArrayList<String>();
+
+		// 每一个字段进行处理
+		for (int i = 0; i < parseColumnArr.length; i++) {
+			Elements colpElements = doc.select(parseColumnArr[i]);
+			// 只要有一个 p 就为true
+			boolean flag = false;
+			// 如果p标签不存在
+			if (colpElements.size() == 0) {
+				flag = false;
+			} else {
+				// each p
+				for (Element p : colpElements) {
+					// 获取包含text及子标签的所有内容
+					String nodeText = p.text();
+					if (nodeText != null && !"".equals(nodeText.trim())) {
+						flag = true;
+						break;
+					}
+				}
+				// 对这个字段的处理
+				if (flag == true) {
+					result.add("1");
+				} else {
+					result.add("0");
+				}
+			}
+		}
+		// 最后返回结果
+		return result;
 	}
 
 	public static void writexml(List<String> resultList, String outFileName,

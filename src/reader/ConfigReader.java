@@ -1,10 +1,7 @@
 package reader;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,11 +14,9 @@ import typeobj.NumberLst;
 import typeobj.SGM;
 import typeobj.XML;
 import utils.file.FileUtils;
-import utils.file.FilesFilter;
-import utils.folder.FolderRecursion;
-import utils.folder.FolderUtils;
 
 public class ConfigReader {
+
 	public void loadConfig(String confxml) throws Exception {
 		// 读取号单的配置，从而分别处理每一个配置
 		File configFile = new File(System.getProperty("user.dir") + "/conf/"
@@ -30,203 +25,126 @@ public class ConfigReader {
 
 		try {
 			doc = Jsoup.parse(configFile, "utf-8");
+			System.out.println();
 		} catch (IOException e) {
-			System.out.println("read config xml fail.");
+			System.err.println("读取xml配置文件失败.");
+			System.exit(0);
 			e.printStackTrace();
 		}
+
 		// 选取xml中的base部分的标签
 		Elements base = doc.select("baseroot");
-		String destDir = doc.select("baseroot>destdir").text();
+		String destDir = base.select("destdir").text();
 
 		// 选择branch的各个部分
 		Elements branchs = doc.select("branch");
 		for (Element branch : branchs) {
-			Element fileSearchArgs = branch.select("file-search").get(0);//只能有一个
-			Elements typeReaderArgs = branch.select("text-read");
+			Element fileSearchArgs = branch.select("FileSearcher").get(0);// 只能有一个
+			Elements typeReaderArgs = branch.select("TextReader");
 
-			Map<String, List<File>> map = getFileArgs(fileSearchArgs, base);
-			if (map == null) {
+			FileSearcher searcher = new FileSearcher();
+			searcher.search(fileSearchArgs, base);
+			Map<String, List<String>> fileMap = searcher.getTypeOutFilesMap();
+			Map<String, String> outnameMap = searcher.getTypeOutNameMap();
+			if (fileMap == null || outnameMap == null) {
 				continue;
 			}
 			// read by filetype
-			readByType(map, typeReaderArgs, destDir);
+			readByType(fileMap, outnameMap, typeReaderArgs, destDir);
 		}
 	}
 
-	public static void readByType(Map<String, List<File>> map,
-			Elements typeReaderArgs, String destDir) throws Exception {
+	public static void readByType(Map<String, List<String>> filemap,
+			Map<String, String> outnameMap, Elements typeReaderArgs,
+			String destBaseDir) throws Exception {
+		if (!destBaseDir.endsWith("\\")) {
+			destBaseDir = destBaseDir + "\\";
+		}
 		for (Element typeArg : typeReaderArgs) {
+			// xml
 			String filetype = typeArg.select("filetype").text();
-			readfile(map, typeArg, filetype, destDir);
+			// xml outpath
+			String outfilepath = destBaseDir + outnameMap.get(filetype);
+			// xml read args
+			List<String> readPaths = filemap.get(filetype);
+			readfile(filetype, readPaths, typeArg, outfilepath);
 		}
 	}
 
-	public static Map<String, List<File>> getFileArgs(Element fileSearchArgs,
-			Elements base) {
-		/*
-		 * 文件搜索模块 读取配置，返回{outname:List<File>}
-		 */
-
-		// 存放结果
-		Map<String, List<File>> outNameAndfilesMap = new HashMap<String, List<File>>();// 存放结果
-
-		// 读取配置文件中：搜索文件的条件，并返回搜索结果
-		String followpath = fileSearchArgs.select("follow-path").get(0)
-				.ownText();
-		String country = fileSearchArgs.select("follow-path").get(0)
-				.attr("class");
-		String incdirs = fileSearchArgs.select("incdir").get(0).ownText();
-		String excdirs = fileSearchArgs.select("excdir").get(0).ownText();
-		String incfiles = fileSearchArgs.select("incfile").get(0).ownText();
-		String excfiles = fileSearchArgs.select("excfile").get(0).ownText();
-		String extend = fileSearchArgs.select("extend").get(0).ownText();
-		String outfiles = fileSearchArgs.select("outfile").get(0).ownText();
-
-		// search dir:如果是相对路径就添加，否则就直接用绝对路径
-		String fullPath = "";
-		if (followpath.startsWith("\\")) {
-			fullPath = base.select("basedir." + country).get(0).ownText()
-					+ followpath;
-		} else {
-			fullPath = followpath;
-		}
-
-		// filter: 筛选文件夹的条件
-		String[] incdirArr = incdirs.split(";");// 多个组，出来也是多个文件集合
-		String[] outfileArr = outfiles.split(";");// 对应上面的多个组，出来是多个文件集合
-
-		// 遍历得到所有的文件夹，并筛选
-		List<File> folderList;
-		try {
-			folderList = FolderRecursion.getAllFoldersList(fullPath);
-		} catch (FileNotFoundException e) {
-			System.err.println("搜索的根路径：" + e.getMessage());
-			for (String outname : outfileArr) {
-				outNameAndfilesMap.put(outname, null);
-			}
-			return outNameAndfilesMap;
-		}
-		// 存放遍历后的文件夹筛选后的结果
-		List<File> folderCleared = new ArrayList<File>();
-
-		// 开始筛选文件夹
-		for (int i = 0; i < outfileArr.length; i++) {
-			String incdir = incdirArr[i];
-			String outname = outfileArr[i];
-			// 如果包含多层筛选，则多次筛选包含的字符串
-			if (incdir.contains("&")) {
-				String[] repeatIncFilter = incdir.split("&");
-				for (String oneinc : repeatIncFilter) {
-					folderList = FilesFilter
-							.filter(folderList, oneinc, excdirs);
-				}
-				folderCleared = folderList;
-			} else {
-				folderCleared = FilesFilter.filter(folderList, incdir, excdirs);
-			}
-
-			// 获得筛选后的文件夹中的所有文件
-			List<File> allfiles = FolderUtils.getFiles(folderCleared);
-			// 筛选扩展名和关键词
-			List<File> allExtfile = FilesFilter.filterExt(allfiles, extend,
-					null);
-			List<File> fileCleared = FilesFilter.filter(allExtfile, incfiles,
-					excfiles);
-			outNameAndfilesMap.put(outname, fileCleared);
-			// 查错
-			// if(fileCleared.size() > 0){
-			// System.out.println(fullPath+ "--"+ incdir
-			// +"--"+outname+"--"+fileCleared.get(0));
-			// }else{
-			// System.out.println(fullPath+ "--"+ incdir +"--"+outname+"--" +
-			// fileCleared.size());
-			// }
-		}
-		return outNameAndfilesMap;
-	}
-
-	public static void readfile(Map<String, List<File>> map, Element readArgs,
-			String filetype, String destDir) throws Exception {
+	public static void readfile(String filetype, List<String> readPaths,
+			Element typeArgs, String outPath) throws Exception {
 		if (filetype.toLowerCase().equals("xml")) {
 			System.out.println("开始读取xml");
-			readXML(map, readArgs, destDir);
+			readXML(readPaths, typeArgs, outPath);
 			System.out.println("结束读取xml\n");
 		} else if (filetype.toLowerCase().equals("sgm")) {
 			System.out.println("开始读取sgm");
-			readSGM(map, readArgs, destDir);
+			// 修改了原来的解析程序此处用的是sgm
+			readXML(readPaths, typeArgs, outPath);
 			System.out.println("结束读取sgm\n");
 		} else if (filetype.toLowerCase().equals("lst")) {
 			System.out.println("开始读取lst");
-			readTXT(map, readArgs, destDir);
+			readTXT(readPaths, typeArgs, outPath);
 			System.out.println("结束读取lst\n");
 		} else if (filetype.toLowerCase().equals("path")) {
 			System.out.println("开始读取path");
-			readPATH(map, readArgs, destDir);
+			readPATH(readPaths, typeArgs, outPath);
 			System.out.println("结束读取path\n");
 		}
 	}
 
-	public static void readNRM() {
-
-	}
-
-	public static void readPATH(Map<String, List<File>> map, Element readArgs,
-			String destDir) throws Exception {
+	public static void readPATH(List<String> readPaths, Element readArgs,
+			String outPath) throws Exception {
 		String header = readArgs.select("header").get(0).ownText();
 		String encodingout = readArgs.select("encoding-out").get(0).ownText();
 
 		StringBuilder sb = new StringBuilder();
 		sb.append(header + "\r\n");
-		for (String key : map.keySet()) {
-			String outname = destDir + key;
-			List<File> inFiles = map.get(key);
-			// 若未找到文件
-			if (inFiles == null || inFiles.size() == 0) {
-				System.err.println("未查找到符合条件的文件");
-				System.out.println("输出：" + key);
-				FileUtils.write(outname, sb.toString(), encodingout);
-				return;
-			}
-
-			// 得到文件名，不含扩展名
-			for (File f : inFiles) {
-				String fileName = f.getName().substring(0,
-						f.getName().lastIndexOf("."));
-				sb.append(fileName + "\r\n");
-			}
-			System.out.println("输出：" + key);
-			FileUtils.write(outname, sb.toString(), encodingout);
+		// 若未找到文件
+		if (readPaths == null || readPaths.size() == 0) {
+			System.err.println("未查找到符合条件的文件");
+			System.out.println("输出：" + outPath);
+			FileUtils.write(outPath, sb.toString(), encodingout);
+			return;
 		}
+
+		// 得到文件名，不含扩展名
+		for (String fileName : readPaths) {
+			fileName = fileName.substring(0, fileName.lastIndexOf("."));
+			sb.append(fileName + "\r\n");
+		}
+		System.out.println("输出：" + outPath);
+		FileUtils.write(outPath, sb.toString(), encodingout);
 	}
 
-	public static XML readXML(Map<String, List<File>> map, Element readArgs,
-			String destDir) throws Exception {
+	public static XML readXML(List<String> readPaths, Element readArgs,
+			String outPath) throws Exception {
 		XML xml = new XML();
 		String header = readArgs.select("header").get(0).ownText();
 		String encodingin = readArgs.select("encoding-in").get(0).ownText();
 		String encodingout = readArgs.select("encoding-out").get(0).ownText();
 		String rootnode = readArgs.select("rootnode").get(0).ownText();
-		String nodes = readArgs.select("nodes").get(0).ownText();
+		String textnodes = readArgs.select("textnodes").get(0).ownText();
+		String existnodes = readArgs.select("existnodes").get(0).ownText();
 
 		// read
 		xml.setHeader(header);
 		xml.setEncodingin(encodingin);
 		xml.setEncodingout(encodingout);
 		xml.setRootnode(rootnode);
-		xml.setNodes(nodes);
+		xml.setTextnodes(textnodes);
+		xml.setExistNodes(existnodes);
 
 		XMLReader xmlReader = new XMLReader();
-		for (String key : map.keySet()) {
-			String outname = destDir + key;
-			List<File> inFiles = map.get(key);
-			xmlReader.readXml(inFiles, xml, outname);
-			System.out.println("输出：" + key);
-		}
+
+		xmlReader.readXml(readPaths, xml, outPath);
+		System.out.println("输出：" + outPath);
+
 		return xml;
 	}
 
-	public static NumberLst readTXT(Map<String, List<File>> map,
-			Element readArgs, String destDir) throws IOException {
+	public static NumberLst readTXT(List<String> readPaths, Element readArgs,
+			String outPath) throws IOException {
 		String header = readArgs.select("header").get(0).ownText();
 		String charsetIn = readArgs.select("encoding-in").get(0).ownText();
 		String charsetOut = readArgs.select("encoding-out").get(0).ownText();
@@ -247,12 +165,8 @@ public class ConfigReader {
 		numLst.setRe(match);
 		numLst.setRep(rep);
 		// read lst
-		for (String key : map.keySet()) {
-			String outname = destDir + key;
-			List<File> inFiles = map.get(key);
-			LstReader.read(inFiles, numLst, outname);
-			System.out.println("输出：" + key);
-		}
+		LstReader.read(readPaths, numLst, outPath);
+		System.out.println("输出：" + outPath);
 		return numLst;
 	}
 

@@ -6,47 +6,54 @@ import java.util.List;
 
 public class FilesFilter {
 
-	public static List<File> filter(List<File> fileList, String containsName,
-			String excludeName) {
-		// 筛选文件或文件夹
-		List<File> out = new ArrayList<File>();
-		for (File file : fileList) {
-			String fileName = file.getAbsolutePath();
-			// 是否保留与是否删除
-			boolean shouldRetain = contains(fileName, containsName);// 或的关系，包含其中一个即可
-			boolean shouldExclude = exclude(fileName, excludeName);// 与的关系，出现在列表中的都要排除
-			if (shouldRetain && !shouldExclude) {
-				out.add(file);
-			}
-		}
-		return out;
-	}
-
-	public static List<String> filter(List<String> fileList, String containsName) {
+	public static List<String> filter(List<String> fileList,
+			String containsName, String excludeName) {
 		// 筛选文件或文件夹
 		List<String> out = new ArrayList<String>();
 		for (String fileName : fileList) {
 			// 是否保留与是否删除
 			boolean shouldRetain = contains(fileName, containsName);// 或的关系，包含其中一个即可
-			if (shouldRetain) {
+			boolean shouldExclude = exclude(fileName, excludeName);// 与的关系，出现在列表中的都要排除
+			if (shouldRetain && !shouldExclude) {
 				out.add(fileName);
 			}
 		}
 		return out;
 	}
 
-	public static List<File> filterExt(List<File> fileList, String containsExt,
-			String excludeExt) {
+	public static List<String> filter(List<String> fileList,
+			boolean filterFilePath, String containsName, String excludeName) {
+		// 筛选文件
+		List<String> out = new ArrayList<String>();
+		String checkName = "";
+		for (String fileName : fileList) {
+			File file = new File(fileName);
+			if (filterFilePath) {
+				checkName = file.getParentFile().getAbsolutePath();
+			} else {
+				checkName = file.getName();
+			}
+			// 是否保留与是否删除
+			boolean shouldRetain = contains(checkName, containsName);// 或的关系，包含其中一个即可
+			boolean shouldExclude = exclude(checkName, excludeName);// 与的关系，出现在列表中的都要排除
+			if (shouldRetain && !shouldExclude) {
+				out.add(fileName);
+			}
+		}
+		return out;
+	}
+
+	public static List<String> filterExt(List<String> fileList,
+			String containsExt, String excludeExt) {
 		// 筛选文件的扩展名
-		List<File> out = new ArrayList<File>();
-		for (File file : fileList) {
-			if (file.isFile()) {
-				String fileName = file.getName();
+		List<String> out = new ArrayList<String>();
+		for (String fileName : fileList) {
+			if (new File(fileName).isFile()) {
 				// 是否保留与是否删除
 				boolean shouldRetain = containsExtension(fileName, containsExt);
 				boolean shouldExclude = excludeExtension(fileName, excludeExt);
 				if (shouldRetain && !shouldExclude) {
-					out.add(file);
+					out.add(fileName);
 				}
 			}
 		}

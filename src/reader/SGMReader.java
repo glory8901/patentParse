@@ -3,12 +3,17 @@ package reader;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.select.Elements;
 
 import typeobj.SGM;
 import utils.Converter;
@@ -125,4 +130,5 @@ public class SGMReader {
 		sgm = new SGM(country, pubdate, kind, regnum);
 		return sgm;
 	}
+
 }
