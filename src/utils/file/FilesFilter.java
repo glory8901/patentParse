@@ -6,8 +6,7 @@ import java.util.List;
 
 public class FilesFilter {
 
-	public static List<String> filter(List<String> fileList,
-			String containsName, String excludeName) {
+	public static List<String> filter(List<String> fileList, String containsName, String excludeName) {
 		// 筛选文件或文件夹
 		List<String> out = new ArrayList<String>();
 		for (String fileName : fileList) {
@@ -21,8 +20,12 @@ public class FilesFilter {
 		return out;
 	}
 
-	public static List<String> filter(List<String> fileList,
-			boolean filterFilePath, String containsName, String excludeName) {
+	public static List<String> filter(List<String> fileList, boolean filterFilePath, String containsName,
+			String excludeName) {
+		// 直接判断是否跳过
+		if ((containsName == null || "".equals(containsName)) && (excludeName == null || "".equals(excludeName))) {
+			return fileList;
+		}
 		// 筛选文件
 		List<String> out = new ArrayList<String>();
 		String checkName = "";
@@ -43,8 +46,7 @@ public class FilesFilter {
 		return out;
 	}
 
-	public static List<String> filterExt(List<String> fileList,
-			String containsExt, String excludeExt) {
+	public static List<String> filterExt(List<String> fileList, String containsExt, String excludeExt) {
 		// 筛选文件的扩展名
 		List<String> out = new ArrayList<String>();
 		for (String fileName : fileList) {

@@ -1,0 +1,53 @@
+<root>
+	<baseroot>
+		<basedir class="RU">\\192.168.6.140\i\RU\俄罗斯全文代码化数据\ISO_Inv_UM_bulletin\2005
+		</basedir>
+		<destdir>D:\专利解析\</destdir>
+		<disk>G:\DOC</disk>
+		<ISO>C:\Program Files\DAEMON Tools Lite</ISO>
+	</baseroot>
+
+	<branch>
+		<file-search>
+			<!-- 判断是相对路径还是绝对路径，如果是相对路径，则追加到basedir;否则直接使用该路径 -->
+			<follow-path class="RU"></follow-path>
+			<!-- '&'表示同时包含的条件,多层查找; '*'表示包含任意一个即可的条件, ';'表示多组查找请求，对应输出多个文件 -->
+			<incdir></incdir>
+			<!-- 排除列表，用*分割 -->
+			<excdir></excdir>
+			<!-- 包含文件列表，用*分割 -->
+			<incfile></incfile>
+			<!-- 排除文件列表，用*分割 -->
+			<excfile></excfile>
+			<!-- 包含扩展名列表，用*分割 -->
+			<extend>.xml*.nrm</extend>
+			<!-- ';'表示输出多个文件,输出为csv文件 -->
+			<outfile></outfile>
+		</file-search>
+		<text-read>
+			<filetype>xml</filetype>
+			<header>B110,B130,B140,B190,B210,B220,SDOBI-EN,description,claims,abstract-EN,ru-notification,inner-path
+			</header>
+			<encoding-in>UTF-8</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<!-- 使用";"进行分隔 -->
+			<textnodes>SDOBI[lang=ru]>B100>B110*SDOBI[lang=ru]>B100>B130*SDOBI[lang=ru]>B100>B140>date*SDOBI[lang=ru]>B100>B190*SDOBI[lang=ru]>ru-b200>B210*SDOBI[lang=ru]>ru-b200>B220>date
+			</textnodes>
+			<existnodes>SDOBI[lang=en]*description*claims*abstract[lang=en]*ru-notification
+			</existnodes>
+		</text-read>
+		<text-read>
+			<filetype>nrm</filetype>
+			<header>B110,B130,B140,B190,B210,B220,SDOBI-EN,description,claims,abstract-EN,ru-notification
+			</header>
+			<encoding-in>windows-1251</encoding-in>
+			<encoding-out>GBK</encoding-out>
+			<rootnode>DesignApplication</rootnode>
+			<!-- 使用";"进行分隔 -->
+			<textnodes>SDOBI[LA=RU]>B110*SDOBI[LA=RU]>B130*SDOBI[LA=RU]>B140*SDOBI[LA=RU]>B190*SDOBI[LA=RU]>B210RU*SDOBI[LA=RU]>B220
+			</textnodes>
+			<existnodes>SDOBI[LA=EN]*SDODE*SDOCL*SDOAB[LA=EN]*SDOLEGAL
+			</existnodes>
+		</text-read>
+	</branch>
+</root>

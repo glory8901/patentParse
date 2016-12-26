@@ -73,7 +73,7 @@ public class FileUtils {
 		// 以指定的编码写文件
 		FileOutputStream out = null;
 		File f = new File(fileName);
-		out = new FileOutputStream(f);
+		out = new FileOutputStream(f,true);
 		out.write(text.getBytes(encoding));
 		out.close();
 	}

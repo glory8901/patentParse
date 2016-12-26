@@ -1,0 +1,45 @@
+<root>
+	<baseroot>
+		<basedir class="KR">\\10.33.2.113\KR_unzip\ST96\19790101-\patent\1973-2014\Examined\1973\0002\0002
+		</basedir>
+		<destdir>H:\数据解析\解析结果\ST96</destdir>
+	</baseroot>
+
+	<branch>
+		<FileSearcher>
+			<!-- 相对路径或者绝对路径。如果是相对路径，则追加到basedir;否则直接使用该路径 -->
+			<AddPath class="KR"></AddPath>
+			<filter>
+				<!-- '&'表示同时满足的条件,多层查找; '*'表示包含任意一个即可的条件 -->
+				<incdir></incdir>
+				<!-- 排除列表，用*分割,表示或的关系 -->
+				<excdir></excdir>
+				<!-- 包含文件列表，用*分割,表示或的关系 -->
+				<incfile></incfile>
+				<!-- 排除文件列表，用*分割，表示排除列表中所有内容 -->
+				<excfile></excfile>
+				<!-- 包含的扩展名列表，用*分割，表示或的关系 -->
+				<extend>xml</extend>
+				<!-- ,输出为csv文件 -->
+				<outfile>kr_st96_xml.csv</outfile>
+			</filter>
+		</FileSearcher>
+		<TextReader>
+			<filetype>xml</filetype>
+			<header>pubno,pubcountry,kind,PublicationDate,appcountry,appno,appdate,title,description,claim,abstract,path
+			</header>
+			<encoding-in>UTF-8</encoding-in>
+			<encoding-out>UTF-8</encoding-out>
+			<!-- 使用"*"进行分隔 -->
+			<rootnode>krpat|PatentPublicationNotice</rootnode>
+			<textnodes>krpat|PatentBibliographicData>krpat|PatentPublicationIdentificationBag>pat|PatentPublicationIdentification>pat|PublicationNumber*krpat|PatentBibliographicData>krpat|PatentPublicationIdentificationBag>pat|PatentPublicationIdentification>com|IPOfficeCode*krpat|PatentBibliographicData>krpat|PatentPublicationIdentificationBag>pat|PatentPublicationIdentification>com|PatentDocumentKindCode*krpat|PatentBibliographicData>krpat|PatentPublicationIdentificationBag>pat|PatentPublicationIdentification>com|PublicationDate*krpat|PatentBibliographicData>pat|ApplicationIdentification>com|IPOfficeCode*krpat|PatentBibliographicData>pat|ApplicationIdentification>com|ApplicationNumber>com|ApplicationNumberText*krpat|PatentBibliographicData>pat|ApplicationIdentification>pat|FilingDate
+			</textnodes>
+			<existnodes>krpat|PatentBibliographicData>pat|InventionTitle*krpat|ApplicationBody>pat|Description*krpat|ApplicationBody>pat|Claims*krpat|ApplicationBody>pat|Abstract
+			</existnodes>
+		</TextReader>
+	</branch>
+</root>
+
+
+
+

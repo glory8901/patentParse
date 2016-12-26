@@ -13,20 +13,22 @@ import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
 import utils.file.ISOUtils;
 import utils.folder.MyFileVisitor;
 
-public class RUParser {
+public class ImgAllTest {
 	private static String basedir;
 	private static String mountisodir;
 	private static String disk;
 
 	public static void main(String[] args) {
 		try {
-			RUParser nparser = new RUParser();
-			Elements typeReaderArgs = nparser.loadConfig("ru_check.xml");
+			ImgAllTest nparser = new ImgAllTest();
+			Elements typeReaderArgs = nparser.loadConfig("test.xml");
 			List<String> allISOList = nparser.getAllISO();
 			nparser.readISO(allISOList, typeReaderArgs);
 		} catch (Exception e) {
@@ -92,16 +94,17 @@ public class RUParser {
 	public static void openISOReadFile(String isopath, String ISODiskLabel,
 			String lookingForExtsFiles, Elements typeReaderArgs)
 			throws IOException {
+		String isoName = new File(isopath).getName();
 		// get all xmls
 		List<String> fileList = getFileList(ISODiskLabel, lookingForExtsFiles);
-		System.out.println(String.format("current ISO:%s,XML:%d", isopath,
-				fileList.size()));
+		System.out.println(String.format("XML:%d", fileList.size()));
 		// get all xml content
 		List<String> xmlDocList = new ArrayList<String>();
-		// add header
-		String header = typeReaderArgs.get(0).select("header").get(0).ownText();
-		xmlDocList.add(header);
-		System.out.println(header);
+		// // add header
+		// String header =
+		// typeReaderArgs.get(0).select("header").get(0).ownText();
+		// xmlDocList.add(header);
+		// System.out.println(header);
 		// read xmls
 		for (String file : fileList) {
 			String line = null;
@@ -111,13 +114,12 @@ public class RUParser {
 				line = readTypeFile(file, "nrm", typeReaderArgs);
 			}
 			if (line != null) {
-				xmlDocList.add(line);
+				xmlDocList.add(line + "," + isoName);
 			}
 		}
 		// outpath
-		String outname = new File(isopath).getName();
-		FileUtils.writeLines(new File("out/ru_" + outname + ".csv"), "utf-8",
-				xmlDocList);
+		FileUtils.writeLines(new File("out/ru_2005-2016.csv"), "utf-8",
+				xmlDocList, true);
 	}
 
 	public static List<String> getFileList(String basedir, String ext)
@@ -126,10 +128,9 @@ public class RUParser {
 			throw new FileNotFoundException(basedir + " 不存在");
 		}
 		Path fileDir = Paths.get(basedir);
-		
 		List<String> extensionList = new ArrayList<String>();
 		extensionList.add(ext);
-		
+
 		MyFileVisitor visitor = new MyFileVisitor(extensionList);
 		// walk
 		Files.walkFileTree(fileDir, visitor);
@@ -150,6 +151,9 @@ public class RUParser {
 			if (ftype.equals(filetype)) {
 				String line = parse(nrmfile, encoding, parseColumns,
 						existColumns);
+				if (line == null) {
+					return null;
+				}
 				return line;
 			}
 		}
@@ -165,9 +169,14 @@ public class RUParser {
 		} catch (Exception e) {
 			System.err.println("Parse Fail:" + xmlfile.getAbsolutePath());
 			return null;
+			// e.printStackTrace();
 		}
 		outline.addAll(textvalue(doc, parseColumns));
-		outline.addAll(existvalue(doc, existColumns));
+		List<String> exist = existvalue(doc, existColumns);
+		if (exist == null) {
+			return null;
+		}
+		outline.addAll(exist);
 		outline.add(xmlfile.getAbsolutePath());
 		// System.out.println(join(outline, ","));
 		return join(outline, ",");
@@ -186,28 +195,80 @@ public class RUParser {
 		return sb.toString();
 	}
 
+	/**
+	 * 
+	 * @param doc
+	 * @param parseColumns
+	 * @return
+	 */
 	public static List<String> existvalue(Document doc, String parseColumns) {
 		String[] parseColumnArr = parseColumns.split("\\*");
 		List<String> result = new ArrayList<String>();
-
+		// 判断是否添加该行
+		boolean ifaddTheXML = false;
+		// each column
 		for (int i = 0; i < parseColumnArr.length; i++) {
-			try {
-				Elements nodeelements = doc.select(parseColumnArr[i]);
-				if (nodeelements.size() == 0) {
-					result.add("0");
-				} else {
-					String nodeText = nodeelements.text();
-					if (nodeText == null || "".equals(nodeText)) {
-						result.add("0");
+			Elements colpElements = doc.select(parseColumnArr[i]);
+			boolean flag = true;
+			// all p
+			if (colpElements.size() == 0) {
+				flag = false;
+			} else {
+				for (Element p : colpElements) {
+					// each p,all p should have img
+					List<Node> textAndnodes = p.childNodes();// 获取包含text及子标签的所有内容
+					if (textAndnodes.size() == 0) {
+						flag = false;
+						break;
+					}
+					// 测试是否第一个内容是标签，且标签是img
+					Node fNode = null;
+					for (int j = 0; j < textAndnodes.size(); j++) {
+						fNode = textAndnodes.get(j);
+						if (fNode instanceof TextNode) {
+							String text = fNode.toString();
+							if (text == null || "".equals(text.trim())) {
+								// 找到第一个节点
+								continue;
+							} else {
+								break;
+							}
+						} else if (fNode instanceof Element) {
+							break;
+							// System.out.println("Element");
+						} else {
+							System.out.println("other");
+							break;
+						}
+					}
+					// 判断含标签的文档
+					if (fNode instanceof Element) {
+						// 类型转换
+						Element img = (Element) fNode;
+						String tagImg = img.tagName();
+						if (!"img".equals(tagImg)) {
+							flag = false;
+							break;
+						}
 					} else {
-						result.add("1");
+						flag = false;
+						break;
 					}
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
+			}
+			if (flag == true) {
+				result.add("1");
+				ifaddTheXML = true;
+			} else {
+				result.add("0");
 			}
 		}
-		return result;
+		// if has 1,then add
+		if (ifaddTheXML) {
+			return result;
+		} else {
+			return null;
+		}
 	}
 
 	public static List<String> textvalue(Document doc, String parseColumns) {

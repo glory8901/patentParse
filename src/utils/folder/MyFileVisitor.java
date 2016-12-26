@@ -9,8 +9,7 @@ import java.util.List;
 
 public class MyFileVisitor extends SimpleFileVisitor<Path> {
 	private List<String> fileList = new ArrayList<String>();
-	private String basedir;
-	private String exts;
+	private List<String> extList;
 
 	// @Override
 	// public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes
@@ -31,8 +30,7 @@ public class MyFileVisitor extends SimpleFileVisitor<Path> {
 	@Override
 	public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
 		// 正在访问一个文件时要干啥
-		String[] extArr = exts.split("\\|");
-		for (String oneext : extArr) {
+		for (String oneext : extList) {
 			if (file.toString().toLowerCase().endsWith(oneext.toLowerCase())) {
 				fileList.add(file.toString());
 				break;
@@ -49,10 +47,9 @@ public class MyFileVisitor extends SimpleFileVisitor<Path> {
 	// return FileVisitResult.CONTINUE;
 	// }
 
-	public MyFileVisitor(String basedir, String exts) {
+	public MyFileVisitor(List<String> extList) {
 		super();
-		this.basedir = basedir;
-		this.exts = exts;
+		this.extList = extList;
 	}
 
 	public List<String> getFileList() {

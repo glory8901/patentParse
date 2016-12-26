@@ -1,6 +1,7 @@
 package reader;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +16,7 @@ import utils.StringUtils;
 import utils.file.FileUtils;
 
 public class XMLReader {
-	public void readXml(List<String> xmlFiles, XML xml, String outName)
-			throws Exception {
+	public void readXml(List<String> xmlFiles, XML xml, String outName) throws Exception {
 		String header = xml.getHeader();
 		String encodingin = xml.getEncodingin();
 		String encodingout = xml.getEncodingout();
@@ -25,8 +25,13 @@ public class XMLReader {
 		String existNodes = xml.getExistNodes();
 		List<String> lineList = new ArrayList<String>();
 
+		// 对原来的输出进行清除
+		File outFile = new File(outName);
+		if(outFile.exists()){
+			outFile.delete();
+		}
 		// 将标题加入list中
-		lineList.add(header);
+		lineList.add(header.replace(",", "\t"));
 
 		// 如果找不到文件，报错
 		if (xmlFiles == null || xmlFiles.size() == 0) {
@@ -39,15 +44,20 @@ public class XMLReader {
 
 		for (String eachXml : xmlFiles) {
 			// 读取每一个xml，并将结果存入linelist中
-			List<String> textValue = getNodeText(eachXml, encodingin, rootName,
-					textNodes, existNodes);
+			List<String> textValue = getNodeText(eachXml, encodingin, rootName, textNodes, existNodes);
 			lineList.addAll(textValue);
+			int size = lineList.size();
+			if (size >= 1000) {
+				// 每1000行写一次
+				writexml(lineList, outName, encodingout);
+				lineList.clear();
+			}
 		}
 		writexml(lineList, outName, encodingout);
 	}
 
-	public static List<String> getNodeText(String xmlFile, String encoding,
-			String rootName, String textnodes, String existnodes) {
+	public static List<String> getNodeText(String xmlFile, String encoding, String rootName, String textnodes,
+			String existnodes) {
 		// 用于存放结果
 		List<String> allValues = new ArrayList<String>();
 		// 多值的分割符
@@ -131,12 +141,18 @@ public class XMLReader {
 		return result;
 	}
 
-	public static void writexml(List<String> resultList, String outFileName,
-			String encoding) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		for (String text : resultList) {
-			sb.append(text + "\r\n");
+	public static void writexml(List<String> resultList, String outFileName, String encoding) throws IOException {
+		// 以指定的编码写文件
+		String outdir = outFileName.substring(0, outFileName.lastIndexOf("\\"));
+		File outDir = new File(outdir);
+		if (!outDir.exists()) {
+			outDir.mkdirs();
 		}
-		FileUtils.write(outFileName, sb.toString(), encoding);
+		FileOutputStream out = new FileOutputStream(outFileName, true);
+		for (String text : resultList) {
+			out.write((text + "\r\n").getBytes(encoding));
+			out.flush();
+		}
+		out.close();
 	}
 }

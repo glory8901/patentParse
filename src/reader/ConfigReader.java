@@ -25,7 +25,6 @@ public class ConfigReader {
 
 		try {
 			doc = Jsoup.parse(configFile, "utf-8");
-			System.out.println();
 		} catch (IOException e) {
 			System.err.println("读取xml配置文件失败.");
 			System.exit(0);
@@ -41,7 +40,7 @@ public class ConfigReader {
 		for (Element branch : branchs) {
 			Element fileSearchArgs = branch.select("FileSearcher").get(0);// 只能有一个
 			Elements typeReaderArgs = branch.select("TextReader");
-
+			// 搜索文件夹
 			FileSearcher searcher = new FileSearcher();
 			searcher.search(fileSearchArgs, base);
 			Map<String, List<String>> fileMap = searcher.getTypeOutFilesMap();
@@ -82,6 +81,10 @@ public class ConfigReader {
 			// 修改了原来的解析程序此处用的是sgm
 			readXML(readPaths, typeArgs, outPath);
 			System.out.println("结束读取sgm\n");
+		} else if (filetype.toLowerCase().equals("nrm")) {
+			System.out.println("开始读取nrm");
+			readXML(readPaths, typeArgs, outPath);
+			System.out.println("结束读取nrm\n");
 		} else if (filetype.toLowerCase().equals("lst")) {
 			System.out.println("开始读取lst");
 			readTXT(readPaths, typeArgs, outPath);
