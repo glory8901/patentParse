@@ -1,4 +1,4 @@
-package ent;
+package entrance;
 
 import reader.ConfigReader;
 

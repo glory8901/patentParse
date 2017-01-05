@@ -7,6 +7,7 @@ public class Filter {
 	private String excfileName;
 	private String extension;
 	private String outName;
+	
 	public String getIncdirName() {
 		return incdirName;
 	}

@@ -7,6 +7,16 @@ public class XML {
 	private String rootnode;
 	private String textnodes;
 	private String existNodes;
+	private boolean ifGetFirst;
+	
+	
+	public boolean isIfGetFirst() {
+		return ifGetFirst;
+	}
+
+	public void setIfGetFirst(boolean ifGetFirst) {
+		this.ifGetFirst = ifGetFirst;
+	}
 
 	public String getHeader() {
 		return header;

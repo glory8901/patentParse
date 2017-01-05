@@ -130,7 +130,7 @@ public class RUParser {
 		List<String> extensionList = new ArrayList<String>();
 		extensionList.add(ext);
 		
-		MyFileVisitor visitor = new MyFileVisitor(extensionList);
+		MyFileVisitor visitor = new MyFileVisitor(extensionList,"");
 		// walk
 		Files.walkFileTree(fileDir, visitor);
 		// result

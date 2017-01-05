@@ -13,23 +13,36 @@ import org.jsoup.select.Elements;
 
 import typeobj.XML;
 import utils.StringUtils;
-import utils.file.FileUtils;
 
 public class XMLReader {
-	public void readXml(List<String> xmlFiles, XML xml, String outName) throws Exception {
+	public void readXml(List<String> xmlFiles, XML xml, String outName)
+			throws Exception {
 		String header = xml.getHeader();
 		String encodingin = xml.getEncodingin();
 		String encodingout = xml.getEncodingout();
 		String rootName = xml.getRootnode();
 		String textNodes = xml.getTextnodes();
 		String existNodes = xml.getExistNodes();
+		boolean ifgetFirst = xml.isIfGetFirst();
 		List<String> lineList = new ArrayList<String>();
 
-		// 对原来的输出进行清除
+		// 对原来的输出进行处理
 		File outFile = new File(outName);
-		if(outFile.exists()){
-			outFile.delete();
+		if (outFile.exists()) {
+			int index = outName.lastIndexOf(".");
+			for (int i = 1; i < 100; i++) {
+				String outfileName = outName.substring(0, index) + "_" + i
+						+ outName.substring(index);
+				if (!new File(outfileName).exists()) {
+					outName = outfileName;
+					break;
+				}
+			}
 		}
+
+		// 输出文件名
+		System.out.println("输出：" + outName);
+
 		// 将标题加入list中
 		lineList.add(header.replace(",", "\t"));
 
@@ -44,7 +57,8 @@ public class XMLReader {
 
 		for (String eachXml : xmlFiles) {
 			// 读取每一个xml，并将结果存入linelist中
-			List<String> textValue = getNodeText(eachXml, encodingin, rootName, textNodes, existNodes);
+			List<String> textValue = getNodeText(eachXml, encodingin, rootName,
+					textNodes, existNodes, ifgetFirst);
 			lineList.addAll(textValue);
 			int size = lineList.size();
 			if (size >= 1000) {
@@ -56,13 +70,14 @@ public class XMLReader {
 		writexml(lineList, outName, encodingout);
 	}
 
-	public static List<String> getNodeText(String xmlFile, String encoding, String rootName, String textnodes,
-			String existnodes) {
+	public static List<String> getNodeText(String xmlFile, String encoding,
+			String rootName, String textnodes, String existnodes,
+			boolean ifGetFirst) {
 		// 用于存放结果
 		List<String> allValues = new ArrayList<String>();
 		// 多值的分割符
 		String sep = ";";
-		String[] textNodesArr = textnodes.split("\\*");
+		String[] textNodesArr = textnodes.split(";");
 		// 读取xml文件
 		Document doc = null;
 		try {
@@ -71,7 +86,12 @@ public class XMLReader {
 			System.err.println("Parse Fail:" + xmlFile);
 		}
 
-		Elements daEls = doc.select(rootName);
+		Elements daEls;
+		if (rootName == null || "".equals(rootName)) {
+			daEls = doc.select("body");
+		} else {
+			daEls = doc.select(rootName);
+		}
 		// 每一行xml
 		for (Element xmlrow : daEls) {
 			List<String> lineList = new ArrayList<String>();
@@ -80,7 +100,7 @@ public class XMLReader {
 				if (nodeEls.size() == 0) {
 					// 无值
 					lineList.add("--");
-				} else if (nodeEls.size() == 1) {
+				} else if (nodeEls.size() == 1 || ifGetFirst) {
 					// 单值
 					lineList.add(nodeEls.get(0).ownText());
 				} else {
@@ -92,8 +112,12 @@ public class XMLReader {
 					lineList.add(StringUtils.join(itemArr, sep));
 				}
 			}
+
+			// 加入有值无值的判断
 			List<String> existValue = existvalue(xmlrow, existnodes);
-			lineList.addAll(existValue);
+			if (existValue != null) {
+				lineList.addAll(existValue);
+			}
 			lineList.add(xmlFile);
 			// 将行join为字符串
 			allValues.add(StringUtils.join(lineList, "\t", '"'));
@@ -108,7 +132,10 @@ public class XMLReader {
 	 * @return
 	 */
 	public static List<String> existvalue(Element doc, String parseColumns) {
-		String[] parseColumnArr = parseColumns.split("\\*");
+		if (parseColumns == null || "".equals(parseColumns)) {
+			return null;
+		}
+		String[] parseColumnArr = parseColumns.split(";");
 		List<String> result = new ArrayList<String>();
 
 		// 每一个字段进行处理
@@ -141,7 +168,8 @@ public class XMLReader {
 		return result;
 	}
 
-	public static void writexml(List<String> resultList, String outFileName, String encoding) throws IOException {
+	public static void writexml(List<String> resultList, String outFileName,
+			String encoding) throws IOException {
 		// 以指定的编码写文件
 		String outdir = outFileName.substring(0, outFileName.lastIndexOf("\\"));
 		File outDir = new File(outdir);

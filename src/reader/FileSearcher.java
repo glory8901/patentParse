@@ -16,19 +16,35 @@ import org.jsoup.select.Elements;
 
 import typeobj.Filter;
 import utils.file.FilesFilter;
-import utils.folder.FolderRecursion;
-import utils.folder.FolderUtils;
 import utils.folder.MyFileVisitor;
 
 public class FileSearcher {
 
 	private Map<String, String> typeOutNameMap;
 	private Map<String, List<String>> typeOutFilesMap;
+	private List<String> extensionList;
+	private Map<String, Filter> filterMap;
 
 	public FileSearcher() {
 		super();
 		this.typeOutNameMap = new HashMap<String, String>();// 存放结果
 		this.typeOutFilesMap = new HashMap<String, List<String>>();
+	}
+
+	public List<String> getExtensionList() {
+		return extensionList;
+	}
+
+	public void setExtensionList(List<String> extensionList) {
+		this.extensionList = extensionList;
+	}
+
+	public Map<String, Filter> getFilterMap() {
+		return filterMap;
+	}
+
+	public void setFilterMap(Map<String, Filter> filterMap) {
+		this.filterMap = filterMap;
 	}
 
 	public Map<String, String> getTypeOutNameMap() {
@@ -55,12 +71,11 @@ public class FileSearcher {
 	 * @return
 	 */
 	public void search(Element fileSearchArgs, Elements base) {
-		// 存放结果
-
-		// 读取配置文件中：搜索文件的条件，并返回搜索结果
+		// 读取配置文件中搜索文件的条件，并返回搜索结果
 		String followpath = fileSearchArgs.select("AddPath").get(0).ownText()
 				.trim();
 		String country = fileSearchArgs.select("AddPath").get(0).attr("class");
+		String tempdir = base.select("tempdir").get(0).ownText();
 
 		// search dir:如果是相对路径就添加，否则就直接用绝对路径
 		String fullPath = "";
@@ -77,12 +92,11 @@ public class FileSearcher {
 
 		// 遍历并筛选
 		try {
-			Map<String, Filter> filterMap = sepFilter(fileSearchArgs);
-			walkAndFilter(fullPath, fileSearchArgs, filterMap);
+			filterMap = sepFilter(fileSearchArgs);
+			walkFolder(fullPath, fileSearchArgs, tempdir);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	/**
@@ -93,34 +107,91 @@ public class FileSearcher {
 	 * @param map
 	 * @throws IOException
 	 */
-	public void walkAndFilter(String fullPath, Element fileSearchArgs,
-			Map<String, Filter> map) throws IOException {
+	public void walkFolder(String fullPath, Element fileSearchArgs,
+			String tempdir) throws IOException {
 		// walk
 		Elements extEles = fileSearchArgs.select("extend");
-		List<String> extensionList = new ArrayList<String>();
+		extensionList = new ArrayList<String>();
 		for (Element ele : extEles) {
 			String ext = ele.ownText();
 			extensionList.add(ext);
 		}
+		// 获取文件列表，并保存为中间文件
+		getFileList(fullPath, extensionList, tempdir);
+	}
 
-		// 获取文件列表
-		List<String> fileList = getFileList(fullPath, extensionList);
+	public void filterFileList(List<String> fileList, Map<String, Filter> map) {
 		for (String ext : extensionList) {
 			Filter ft = map.get(ext);
-			// 筛选文件和文件夹
-			List<String> allExtfile = FilesFilter
-					.filterExt(fileList, ext, null);
-			// 筛选文件所在的文件夹路径
-			List<String> fileCleared = FilesFilter.filter(allExtfile, true,
-					ft.getIncdirName(), ft.getExcdirName());
-			// 筛选文件名
-			fileCleared = FilesFilter.filter(fileCleared, false,
-					ft.getIncfileName(), ft.getExcfileName());
 			typeOutNameMap.put(ext, ft.getOutName());
-			typeOutFilesMap.put(ext, fileCleared);
-
+			typeOutFilesMap.put(ext, new ArrayList<String>());
 		}
 
+		// 以后可以采用多个线程来筛选
+		for (String filePath : fileList) {
+			// 建立文件
+			File cFile = new File(filePath);
+			// 获取父目录
+			String checkdir = cFile.getParentFile().getAbsolutePath();
+			String fileName = cFile.getName();
+			String ext = fileName.substring(fileName.lastIndexOf(".") + 1);
+			// 获取扩展名
+			Filter ft = map.get(ext);
+			// 筛选文件
+			boolean toAdd = filteDirFiles(checkdir, fileName, ft);
+			if (toAdd) {
+				typeOutFilesMap.get(ext).add(filePath);
+			}
+			// 清空对象
+			cFile = null;
+		}
+
+	}
+
+	public boolean filteDirFiles(String checkdir, String checkfileName,
+			Filter ft) {
+
+		// 筛选条件
+		String dirContainName = ft.getIncdirName();
+		String dirExcludeName = ft.getExcdirName();
+		String fileContainName = ft.getIncfileName();
+		String fileExcludeName = ft.getExcfileName();
+
+		// 判断文件夹
+		if ((dirContainName != null && !"".equals(dirContainName))) {
+			boolean shouldRetain = FilesFilter.contains(checkdir,
+					dirContainName);// 或的关系，包含其中一个即可
+			if (!shouldRetain) {
+				return false;
+			}
+		}
+		if (dirExcludeName != null && !"".equals(dirExcludeName)) {
+			// 是否保留与是否删除
+			boolean shouldExclude = FilesFilter.exclude(checkdir,
+					dirExcludeName);// 与的关系，出现在列表中的都要排除
+			if (shouldExclude) {
+				return false;
+			}
+		}
+
+		// 判断文件
+		if ((fileContainName != null && !"".equals(fileContainName))) {
+			// 是否保留与是否删除
+			boolean shouldRetain = FilesFilter.contains(checkfileName,
+					fileContainName);// 或的关系，包含其中一个即可
+			if (!shouldRetain) {
+				return false;
+			}
+		}
+		if (fileExcludeName != null && !"".equals(fileExcludeName)) {
+			boolean shouldExclude = FilesFilter.exclude(checkfileName,
+					fileExcludeName);// 与的关系，出现在列表中的都要排除
+			if (shouldExclude) {
+				return false;
+			}
+		}
+		// 最后返回true
+		return true;
 	}
 
 	public Map<String, Filter> sepFilter(Element fileSearchArgs)
@@ -146,119 +217,22 @@ public class FileSearcher {
 
 	/**
 	 * 遍历文件夹
+	 * 
 	 * @param basedir
 	 * @param extList
-	 * @return
 	 * @throws IOException
 	 */
-	public List<String> getFileList(String basedir, List<String> extList)
+	public void getFileList(String basedir, List<String> extList, String tempdir)
 			throws IOException {
 		if (!new File(basedir).exists()) {
 			throw new FileNotFoundException(basedir + " 不存在");
 		}
 		Path fileDir = Paths.get(basedir);
-		//查找这两个扩展名的文件
-		MyFileVisitor visitor = new MyFileVisitor(extList);
+		// 查找这两个扩展名的文件
+		MyFileVisitor visitor = new MyFileVisitor(extList, tempdir);
 		// walk
 		Files.walkFileTree(fileDir, visitor);
-		// result
-		List<String> fileList = visitor.getFileList();
-		return fileList;
+		// 最后的一部分
+		visitor.writeLastList();
 	}
-
-	/**
-	 * 目前没有用这个方法
-	 * 
-	 * @param fullPath
-	 * @param fileSearchArgs
-	 */
-	public void walkAndFilter(String fullPath, Element fileSearchArgs) {
-		// 遍历得到所有的文件夹
-		List<String> folderList;
-		try {
-			folderList = FolderRecursion.getAllFoldersList(fullPath);
-		} catch (FileNotFoundException e) {
-			System.err.println("搜索的根路径：" + e.getMessage());
-			return;
-		}
-
-		// 筛选文件夹和文件
-		filterDir(folderList, fileSearchArgs);
-	}
-
-	/**
-	 * 先遍历文件夹并筛选，然后遍历当前目录下的文件并筛选 目前没有用这个方法
-	 * 
-	 * @param folderList
-	 * @param fileSearchArgs
-	 */
-	public void filterDir(List<String> folderList, Element fileSearchArgs) {
-
-		// filter: 筛选文件夹的条件
-		String incdirs = fileSearchArgs.select("incdir").get(0).ownText();
-		String excdirs = fileSearchArgs.select("excdir").get(0).ownText();
-		String incfiles = fileSearchArgs.select("incfile").get(0).ownText();
-		String excfiles = fileSearchArgs.select("excfile").get(0).ownText();
-		String extensions = fileSearchArgs.select("extend").get(0).ownText();
-		String outfiles = fileSearchArgs.select("outfile").get(0).ownText();
-
-		// 每种类型的文件输出一个
-		String[] outfileArr = outfiles.split("\\|");// 对应上面的多个组，出来是多个文件集合
-		String[] incdirArr = incdirs.split("\\|");// 多个组，出来也是多个文件集合
-		String[] excdirArr = excdirs.split("\\|");// 多个组，出来也是多个文件集合
-		String[] incfileArr = incfiles.split("\\|");// 多个组，出来也是多个文件集合
-		String[] excfileArr = excfiles.split("\\|");// 多个组，出来也是多个文件集合
-		String[] extensionArr = extensions.split("\\|");// 多个组，出来也是多个文件集合
-
-		// 存放遍历后的文件夹筛选后的结果
-		List<String> folderCleared = new ArrayList<String>();
-
-		// 开始筛选文件夹
-		for (int i = 0; i < outfileArr.length; i++) {
-			String incdir = null;
-			if (incdirArr.length >= 2) {
-				incdir = incdirArr[i];
-
-			}
-			String excdir = null;
-			if (excdirArr.length >= 2) {
-				excdir = excdirArr[i];
-			}
-			String outname = outfileArr[i];
-			// 如果包含多层筛选，则多次筛选包含的字符串
-			if (incdir != null && incdir.contains("&")) {
-				String[] repeatIncFilter = incdir.split("&");
-				for (String oneinc : repeatIncFilter) {
-					folderList = FilesFilter.filter(folderList, oneinc, excdir);
-				}
-				folderCleared = folderList;
-			} else {
-				folderCleared = FilesFilter.filter(folderList, incdir, excdir);
-			}
-
-			// 获得筛选后的文件夹中的所有文件
-			List<String> allfiles = FolderUtils.getFiles(folderCleared);
-			String ext = null;
-			String incfs = null;
-			String excfs = null;
-
-			if (extensionArr.length >= 2) {
-				ext = extensionArr[i];
-			}
-			if (incfileArr.length >= 2) {
-				incfs = incfileArr[i];
-			}
-			if (excfileArr.length >= 2) {
-				excfs = excfileArr[i];
-			}
-			// 筛选扩展名和关键词
-			List<String> allExtfile = FilesFilter
-					.filterExt(allfiles, ext, null);
-			List<String> fileCleared = FilesFilter.filter(allExtfile, incfs,
-					excfs);
-			typeOutNameMap.put(ext, outname);
-			typeOutFilesMap.put(ext, fileCleared);
-		}
-	}
-
 }

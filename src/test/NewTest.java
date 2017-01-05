@@ -5,12 +5,22 @@ import java.io.IOException;
 
 public class NewTest {
 	public static void main(String[] args) throws IOException {
-		String outFileName = "D:\\Download\\temp\\kr_kpa_sgm.csv";
-		String outdir = outFileName.substring(0, outFileName.lastIndexOf("\\"));
-		System.out.println(outdir);
-		File outDir = new File(outdir);
-		if (!outDir.exists()) {
-			outDir.mkdirs();
+		String outName = "D:\\Download\\temp\\kr_legal_design_xml.csv";
+		// int index = outName.lastIndexOf(".");
+		// String newOutfileName = outName.substring(0, index) + "_" + 1
+		// + outName.substring(index);
+		File outFile = new File(outName);
+		if (outFile.exists()) {
+			int index = outName.lastIndexOf(".");
+			for (int i = 1; i < 10; i++) {
+				String newOutfileName = outName.substring(0, index) + "_" + i
+						+ outName.substring(index);
+				if (!new File(newOutfileName).exists()) {
+					outFile = new File(newOutfileName);
+					System.out.println(newOutfileName);
+					break;
+				}
+			}
 		}
 	}
 }
