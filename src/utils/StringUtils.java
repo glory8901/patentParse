@@ -1,6 +1,5 @@
 package utils;
 
-import java.util.Collection;
 import java.util.List;
 
 public class StringUtils {

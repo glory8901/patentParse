@@ -1,6 +1,12 @@
 package typeobj;
 
-public class NumberLst {
+/**
+ * 读取号单的一些特征
+ * @author lenovo
+ *
+ */
+public class NumListProperty {
+	
 	private String header;
 	private String encodingin;
 	private String encodingout;

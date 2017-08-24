@@ -15,13 +15,13 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
-import typeobj.SGM;
+import typeobj.SGMProperty;
 import utils.Converter;
 import utils.StringUtils;
 import utils.file.FileUtils;
 
 public class SGMReader {
-	public static void readSGM(List<File> allFiles, SGM onesgm, String outname)
+	public static void readSGM(List<File> allFiles, SGMProperty onesgm, String outname)
 			throws IllegalArgumentException, IllegalAccessException,
 			IOException {
 		// 处理一个配置
@@ -44,7 +44,7 @@ public class SGMReader {
 		Pattern p = Pattern.compile(reg);
 
 		for (File in : allFiles) {
-			SGM contents = parse(in, encodingin, parseColumns);
+			SGMProperty contents = parse(in, encodingin, parseColumns);
 			String kind = "";
 			Field[] allFields = contents.getClass().getDeclaredFields();
 			for (Field f : allFields) {
@@ -101,8 +101,8 @@ public class SGMReader {
 		return year + month + day;
 	}
 
-	public static SGM parse(File sgmfile, String encoding, String parseColumns) {
-		SGM sgm = null;
+	public static SGMProperty parse(File sgmfile, String encoding, String parseColumns) {
+		SGMProperty sgm = null;
 		String[] parseColumnArr = parseColumns.split("\\*");
 		String[] nodes = new String[parseColumnArr.length];
 		Document sgmDoc = null;
@@ -127,7 +127,7 @@ public class SGMReader {
 		String regnum = nodes[3];
 
 		// get line
-		sgm = new SGM(country, pubdate, kind, regnum);
+		sgm = new SGMProperty(country, pubdate, kind, regnum);
 		return sgm;
 	}
 

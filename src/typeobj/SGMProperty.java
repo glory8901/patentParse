@@ -1,6 +1,12 @@
 package typeobj;
 
-public class SGM {
+/**
+ * SGM文件读取的一些特征
+ * @author lenovo
+ *
+ */
+
+public class SGMProperty {
 	private String country;
 	private String pubdate;
 	private String kind;
@@ -12,7 +18,7 @@ public class SGM {
 	private String labels;
 	private String dateLabel;
 
-	public SGM(String country, String pubdate, String kind, String regnum) {
+	public SGMProperty(String country, String pubdate, String kind, String regnum) {
 		super();
 		this.country = country;
 		this.pubdate = pubdate;
@@ -20,7 +26,7 @@ public class SGM {
 		this.regnum = regnum;
 	}
 
-	public SGM() {
+	public SGMProperty() {
 		super();
 	}
 

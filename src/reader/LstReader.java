@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import typeobj.NumberLst;
+import typeobj.NumListProperty;
 import utils.file.FileUtils;
 
 public class LstReader {
-	public static void read(List<String> allFiles, NumberLst numLst,
+	public static void read(List<String> allFiles, NumListProperty numLst,
 			String outname) throws IOException {
 		// 从对象中获取各变量的数值
 		String header = numLst.getHeader();

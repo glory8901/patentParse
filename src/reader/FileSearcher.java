@@ -3,10 +3,12 @@ package reader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +16,9 @@ import java.util.Map;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import typeobj.Filter;
+import typeobj.FilterFeature;
 import utils.file.FilesFilter;
+import utils.folder.DeleteDirectory;
 import utils.folder.MyFileVisitor;
 
 public class FileSearcher {
@@ -23,12 +26,20 @@ public class FileSearcher {
 	private Map<String, String> typeOutNameMap;
 	private Map<String, List<String>> typeOutFilesMap;
 	private List<String> extensionList;
-	private Map<String, Filter> filterMap;
+	private Map<String, FilterFeature> filterMap;
 
-	public FileSearcher() {
+	public FileSearcher(Element fileSearchArgs) {
 		super();
 		this.typeOutNameMap = new HashMap<String, String>();// 存放结果
 		this.typeOutFilesMap = new HashMap<String, List<String>>();
+		this.extensionList = new ArrayList<String>();
+		this.filterMap = sepFilter(fileSearchArgs);
+		// extends
+		Elements extEles = fileSearchArgs.select("extend");
+		for (Element ele : extEles) {
+			String ext = ele.ownText().trim().toLowerCase();
+			this.extensionList.add(ext);
+		}
 	}
 
 	public List<String> getExtensionList() {
@@ -39,11 +50,11 @@ public class FileSearcher {
 		this.extensionList = extensionList;
 	}
 
-	public Map<String, Filter> getFilterMap() {
+	public Map<String, FilterFeature> getFilterMap() {
 		return filterMap;
 	}
 
-	public void setFilterMap(Map<String, Filter> filterMap) {
+	public void setFilterMap(Map<String, FilterFeature> filterMap) {
 		this.filterMap = filterMap;
 	}
 
@@ -72,28 +83,30 @@ public class FileSearcher {
 	 */
 	public void search(Element fileSearchArgs, Elements base) {
 		// 读取配置文件中搜索文件的条件，并返回搜索结果
-		String followpath = fileSearchArgs.select("AddPath").get(0).ownText()
-				.trim();
+		String followpath = fileSearchArgs.select("AddPath").get(0).ownText().trim();
 		String country = fileSearchArgs.select("AddPath").get(0).attr("class");
-		String tempdir = base.select("tempdir").get(0).ownText();
+
+		// 临时文件夹，若不存在创建一个
+		String tempdir = base.select("tempdir").get(0).ownText() + fileSearchArgs.select("AddPath").get(0).ownText();
+		File tempFile = new File(tempdir);
+		if (!tempFile.exists()) {
+			tempFile.mkdirs();
+		}
 
 		// search dir:如果是相对路径就添加，否则就直接用绝对路径
 		String fullPath = "";
 		if (followpath.startsWith("\\")) {
-			fullPath = base.select("basedir." + country).get(0).ownText()
-					+ followpath;// 获取base模块中存储的路径
+			fullPath = base.select("basedir." + country).get(0).ownText() + followpath;// 获取base模块中存储的路径
 		} else if ("".equals(followpath)) {
-			fullPath = base.select("basedir." + country).get(0).ownText()
-					.trim();
+			fullPath = base.select("basedir." + country).get(0).ownText().trim();
 		} else {
 			fullPath = followpath;
 		}
 		System.out.println("当前搜索：" + fullPath);
 
-		// 遍历并筛选
+		// 遍历
 		try {
-			filterMap = sepFilter(fileSearchArgs);
-			walkFolder(fullPath, fileSearchArgs, tempdir);
+			walkFolder(fullPath, tempdir);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -103,26 +116,17 @@ public class FileSearcher {
 	 * 使用新的遍历规则较快
 	 * 
 	 * @param fullPath
-	 * @param fileSearchArgs
 	 * @param map
 	 * @throws IOException
 	 */
-	public void walkFolder(String fullPath, Element fileSearchArgs,
-			String tempdir) throws IOException {
-		// walk
-		Elements extEles = fileSearchArgs.select("extend");
-		extensionList = new ArrayList<String>();
-		for (Element ele : extEles) {
-			String ext = ele.ownText();
-			extensionList.add(ext);
-		}
+	public void walkFolder(String fullPath, String tempdir) throws IOException {
 		// 获取文件列表，并保存为中间文件
 		getFileList(fullPath, extensionList, tempdir);
 	}
 
-	public void filterFileList(List<String> fileList, Map<String, Filter> map) {
+	public void filterFileList(List<String> fileList, Map<String, FilterFeature> map) {
 		for (String ext : extensionList) {
-			Filter ft = map.get(ext);
+			FilterFeature ft = map.get(ext);
 			typeOutNameMap.put(ext, ft.getOutName());
 			typeOutFilesMap.put(ext, new ArrayList<String>());
 		}
@@ -134,9 +138,9 @@ public class FileSearcher {
 			// 获取父目录
 			String checkdir = cFile.getParentFile().getAbsolutePath();
 			String fileName = cFile.getName();
-			String ext = fileName.substring(fileName.lastIndexOf(".") + 1);
+			String ext = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
 			// 获取扩展名
-			Filter ft = map.get(ext);
+			FilterFeature ft = map.get(ext);
 			// 筛选文件
 			boolean toAdd = filteDirFiles(checkdir, fileName, ft);
 			if (toAdd) {
@@ -148,8 +152,7 @@ public class FileSearcher {
 
 	}
 
-	public boolean filteDirFiles(String checkdir, String checkfileName,
-			Filter ft) {
+	public boolean filteDirFiles(String checkdir, String checkfileName, FilterFeature ft) {
 
 		// 筛选条件
 		String dirContainName = ft.getIncdirName();
@@ -159,16 +162,14 @@ public class FileSearcher {
 
 		// 判断文件夹
 		if ((dirContainName != null && !"".equals(dirContainName))) {
-			boolean shouldRetain = FilesFilter.contains(checkdir,
-					dirContainName);// 或的关系，包含其中一个即可
+			boolean shouldRetain = FilesFilter.contains(checkdir, dirContainName);// 或的关系，包含其中一个即可
 			if (!shouldRetain) {
 				return false;
 			}
 		}
 		if (dirExcludeName != null && !"".equals(dirExcludeName)) {
 			// 是否保留与是否删除
-			boolean shouldExclude = FilesFilter.exclude(checkdir,
-					dirExcludeName);// 与的关系，出现在列表中的都要排除
+			boolean shouldExclude = FilesFilter.exclude(checkdir, dirExcludeName);// 与的关系，出现在列表中的都要排除
 			if (shouldExclude) {
 				return false;
 			}
@@ -177,15 +178,13 @@ public class FileSearcher {
 		// 判断文件
 		if ((fileContainName != null && !"".equals(fileContainName))) {
 			// 是否保留与是否删除
-			boolean shouldRetain = FilesFilter.contains(checkfileName,
-					fileContainName);// 或的关系，包含其中一个即可
+			boolean shouldRetain = FilesFilter.contains(checkfileName, fileContainName);// 或的关系，包含其中一个即可
 			if (!shouldRetain) {
 				return false;
 			}
 		}
 		if (fileExcludeName != null && !"".equals(fileExcludeName)) {
-			boolean shouldExclude = FilesFilter.exclude(checkfileName,
-					fileExcludeName);// 与的关系，出现在列表中的都要排除
+			boolean shouldExclude = FilesFilter.exclude(checkfileName, fileExcludeName);// 与的关系，出现在列表中的都要排除
 			if (shouldExclude) {
 				return false;
 			}
@@ -194,9 +193,8 @@ public class FileSearcher {
 		return true;
 	}
 
-	public Map<String, Filter> sepFilter(Element fileSearchArgs)
-			throws IOException {
-		Map<String, Filter> filterMap = new HashMap<String, Filter>();
+	public Map<String, FilterFeature> sepFilter(Element fileSearchArgs) {
+		Map<String, FilterFeature> filterMap = new HashMap<String, FilterFeature>();
 
 		Elements filterArgs = fileSearchArgs.select("filter");
 		for (Element filterArg : filterArgs) {
@@ -208,8 +206,7 @@ public class FileSearcher {
 			String ext = filterArg.select("extend").get(0).ownText();
 			String outname = filterArg.select("outfile").get(0).ownText();
 
-			Filter ft = new Filter(incdirs, excdirs, incfiles, excfiles, ext,
-					outname);
+			FilterFeature ft = new FilterFeature(incdirs, excdirs, incfiles, excfiles, ext, outname);
 			filterMap.put(ext, ft);
 		}
 		return filterMap;
@@ -222,12 +219,18 @@ public class FileSearcher {
 	 * @param extList
 	 * @throws IOException
 	 */
-	public void getFileList(String basedir, List<String> extList, String tempdir)
-			throws IOException {
+	public void getFileList(String basedir, List<String> extList, String tempdir) throws IOException {
 		if (!new File(basedir).exists()) {
 			throw new FileNotFoundException(basedir + " 不存在");
 		}
 		Path fileDir = Paths.get(basedir);
+
+		// 清空tempdir
+		Path directory = Paths.get(tempdir);
+		DeleteDirectory walk = new DeleteDirectory();
+		EnumSet opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+		Files.walkFileTree(directory, opts, Integer.MAX_VALUE, walk);
+
 		// 查找这两个扩展名的文件
 		MyFileVisitor visitor = new MyFileVisitor(extList, tempdir);
 		// walk

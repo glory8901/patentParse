@@ -18,10 +18,8 @@ public class MyFileVisitor extends SimpleFileVisitor<Path> {
 	private int count;
 
 	@Override
-	public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-			throws IOException {
+	public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 		// 访问文件夹之前调用
-
 		return FileVisitResult.CONTINUE;
 	}
 
@@ -36,7 +34,7 @@ public class MyFileVisitor extends SimpleFileVisitor<Path> {
 	public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
 		// 正在访问一个文件时要干啥
 		for (String oneext : extList) {
-			if (file.toString().toLowerCase().endsWith(oneext.toLowerCase())) {
+			if (file.toString().toLowerCase().endsWith("." + oneext.toLowerCase())) {
 				fileList.add(file.toString());
 				break;
 			}
@@ -45,8 +43,7 @@ public class MyFileVisitor extends SimpleFileVisitor<Path> {
 		if (fileList.size() >= 1000000) {
 			count++;
 			try {
-				FileUtils.writeLines(new File(tmpdir + "\\walkfile_" + count),
-						"utf-8", fileList);
+				FileUtils.writeLines(new File(tmpdir + "\\walkfile_" + count), "utf-8", fileList);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -74,8 +71,7 @@ public class MyFileVisitor extends SimpleFileVisitor<Path> {
 	public void writeLastList() {
 		count++;
 		try {
-			FileUtils.writeLines(new File(tmpdir + "\\walkfile_" + count),
-					"utf-8", fileList);
+			FileUtils.writeLines(new File(tmpdir + "\\walkfile_" + count), "utf-8", fileList);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -1,6 +1,12 @@
 package typeobj;
 
-public class Filter {
+/**
+ * 筛选的一些特征
+ * @author lenovo
+ *
+ */
+public class FilterFeature {
+	
 	private String incdirName;
 	private String excdirName;
 	private String incfileName;
@@ -44,7 +50,7 @@ public class Filter {
 	public void setOutName(String outName) {
 		this.outName = outName;
 	}
-	public Filter(String incdirName, String excdirName, String incfileName,
+	public FilterFeature(String incdirName, String excdirName, String incfileName,
 			String excfileName, String extension, String outName) {
 		super();
 		this.incdirName = incdirName;

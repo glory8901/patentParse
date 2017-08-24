@@ -2,6 +2,8 @@ package reader;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -11,17 +13,24 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import typeobj.Filter;
-import typeobj.NumberLst;
-import typeobj.SGM;
-import typeobj.XML;
+import po.PatentPo;
+import po.XMLPoUtil;
+import typeobj.FilterFeature;
+import typeobj.NumListProperty;
+import typeobj.XMLProperty;
+import utils.log.LogUtils;
+import writer.DBUtil;
+import writer.DBWriter;
 
 public class ConfigReader {
+	private String baseDir;
+	private String destDir;
+	private String tmpDir;
 
 	public void loadConfig(String confxml) throws Exception {
 		// 读取号单的配置，从而分别处理每一个配置
-		File configFile = new File(System.getProperty("user.dir") + "/conf/"
-				+ confxml);
+		File configFile = new File(System.getProperty("user.dir") + "/conf/" + confxml);
+		LogUtils.checkLogDir();
 		Document doc = null;
 
 		try {
@@ -34,46 +43,49 @@ public class ConfigReader {
 
 		// 选取xml中的base部分的标签
 		Elements base = doc.select("baseroot");
-		String destDir = base.select("destdir").text();
-		String tmpdir = base.select("tempdir").text();
+		baseDir = base.select("basedir").get(0).ownText();
+		destDir = base.select("destdir").get(0).ownText();
+		tmpDir = base.select("tempdir").get(0).ownText();
 
 		// 选择branch的各个部分,每个branch代表一些搜索条件和文件
 		Elements branchs = doc.select("branch");
 		for (Element branch : branchs) {
-			Element fileSearchArgs = branch.select("FileSearcher").get(0);// 只能有一个
-			Elements typeReaderArgs = branch.select("TextReader");
+			Element fileSearchArgs = branch.select("FileSearcher").get(0);// 每个branch只能有一个
+			Elements typeReaderArgs = branch.select("TextReader");// 可能有多个
+			Elements writerArgs = branch.select("Writer");
+
 			// 搜索文件夹
-			FileSearcher searcher = new FileSearcher();
+			FileSearcher searcher = new FileSearcher(fileSearchArgs);
 			searcher.search(fileSearchArgs, base);
 			System.out.println("搜索完毕\n");
-			Map<String, Filter> filterMap = searcher.getFilterMap();
+
 			// 分批次筛选文件夹，并读xml
+			Map<String, FilterFeature> filterMap = searcher.getFilterMap();
+			String tmpdir = tmpDir + fileSearchArgs.select("AddPath").get(0).ownText();
 			File[] tmpDir = new File(tmpdir).listFiles();
 			for (File tmpfile : tmpDir) {
 				String tmpFileName = tmpfile.getName();
-				// 如果不以walkfile开头
-				if (!tmpFileName.startsWith("walkfile")) {
+				// 如果临时文件不以walkfile开头，或者是文件夹就跳过
+				if (!tmpFileName.startsWith("walkfile") || tmpfile.isDirectory()) {
 					continue;
 				}
 				System.out.println("开始筛选文件夹...");
 				List<String> fileList = FileUtils.readLines(tmpfile, "utf-8");
 				searcher.filterFileList(fileList, filterMap);
-				Map<String, List<String>> fileMap = searcher
-						.getTypeOutFilesMap();
+				Map<String, List<String>> fileMap = searcher.getTypeOutFilesMap();
 				Map<String, String> outnameMap = searcher.getTypeOutNameMap();
 				if (fileMap == null || outnameMap == null) {
 					continue;
 				}
 				System.out.println("结束筛选\n");
 				// 根据文件类型的不同分别采用不同的方法读取
-				readByType(fileMap, outnameMap, typeReaderArgs, destDir);
+				readByType(fileMap, outnameMap, typeReaderArgs, writerArgs.first(), destDir);
 			}
 		}
 	}
 
-	public static void readByType(Map<String, List<String>> filemap,
-			Map<String, String> outnameMap, Elements typeReaderArgs,
-			String destBaseDir) throws Exception {
+	public void readByType(Map<String, List<String>> filemap, Map<String, String> outnameMap, Elements typeReaderArgs,
+			Element writerArgs, String destBaseDir) throws Exception {
 		if (!destBaseDir.endsWith("\\")) {
 			destBaseDir = destBaseDir + "\\";
 		}
@@ -84,44 +96,62 @@ public class ConfigReader {
 			String outfilepath = destBaseDir + outnameMap.get(filetype);
 			// xml read args
 			List<String> readPaths = filemap.get(filetype);
-			readfile(filetype, readPaths, typeArg, outfilepath);
+			readfile(filetype, readPaths, typeArg, writerArgs, outfilepath);
 		}
 	}
 
-	public static void readfile(String filetype, List<String> readPaths,
-			Element typeArgs, String outPath) throws Exception {
-		if (filetype.toLowerCase().equals("xml")) {
-			System.out.println("开始读取xml");
-			readXML(readPaths, typeArgs, outPath);
+	public void readfile(String filetype, List<String> readPaths, Element typeArgs, Element writerArgs, String outPath)
+			throws Exception {
+		String reader = typeArgs.select("reader").get(0).ownText().toLowerCase();
+		if (reader.toLowerCase().startsWith("xml")) {
+			System.out.println("开始读取xml: " + filetype);
+			readXML(readPaths, typeArgs, writerArgs, outPath);
 			System.out.println("结束读取xml\n");
-		} else if (filetype.toLowerCase().equals("sgm")) {
-			System.out.println("开始读取sgm");
-			// 修改了原来的解析程序此处用的是sgm
-			readXML(readPaths, typeArgs, outPath);
-			System.out.println("结束读取sgm\n");
-		} else if (filetype.toLowerCase().equals("nrm")) {
-			System.out.println("开始读取nrm");
-			readXML(readPaths, typeArgs, outPath);
-			System.out.println("结束读取nrm\n");
-		} else if (filetype.toLowerCase().equals("lst")) {
-			System.out.println("开始读取lst");
-			readTXT(readPaths, typeArgs, outPath);
-			System.out.println("结束读取lst\n");
-		} else if (filetype.toLowerCase().equals("path")) {
-			System.out.println("开始读取path");
-			readPATH(readPaths, typeArgs, outPath);
+		} else if (reader.equals("txt")) {
+			System.out.println("开始读取TXT: " + filetype);
+			readTXT(readPaths, typeArgs, writerArgs, outPath);
+			System.out.println("结束读取TXT\n");
+		} else if (reader.equals("path")) {
+			System.out.println("开始读取path: " + filetype);
+			readPATH(readPaths, typeArgs, writerArgs, outPath);
 			System.out.println("结束读取path\n");
+		} else {
+			System.out.println("暂无该种类型文件的读取方法");
 		}
 	}
 
-	public static void readPATH(List<String> readPaths, Element readArgs,
-			String outPath) throws Exception {
+	/**
+	 * 读取路径文件
+	 * 
+	 * @param readPaths
+	 *            所有的xml路径
+	 * @param readArgs
+	 *            xml读取的参数
+	 * @param outPath
+	 *            读取xml输出路径
+	 * @throws Exception
+	 */
+	public void readPATH(List<String> readPaths, Element readArgs, Element writeArgs, String outPath) throws Exception {
 		// 读取文件路径
 		String header = readArgs.select("header").get(0).ownText();
 		String encodingout = readArgs.select("encoding-out").get(0).ownText();
 
 		StringBuilder sb = new StringBuilder();
-		sb.append(header + "\r\n");
+		sb.append(header.replace(";", "\t") + "\r\n");
+
+		// 对原来的输出进行处理
+		File outFile = new File(outPath);
+		if (outFile.exists()) {
+			int index = outPath.lastIndexOf(".");
+			for (int i = 1; i < 100; i++) {
+				String outfileName = outPath.substring(0, index) + "_" + i + outPath.substring(index);
+				if (!new File(outfileName).exists()) {
+					outPath = outfileName;
+					break;
+				}
+			}
+		}
+
 		// 若未找到文件
 		if (readPaths == null || readPaths.size() == 0) {
 			System.err.println("未查找到符合条件的文件");
@@ -130,19 +160,35 @@ public class ConfigReader {
 			return;
 		}
 
-		// 得到文件名，不含扩展名
-		for (String fileName : readPaths) {
-			fileName = fileName.substring(0, fileName.lastIndexOf("."));
-			sb.append(fileName + "\r\n");
-		}
+		// 输出文件名
 		System.out.println("输出：" + outPath);
+		// 得到文件名，不含扩展名
+		for (String filePath : readPaths) {
+			String fileName = filePath.substring(filePath.lastIndexOf("\\") + 1, filePath.lastIndexOf("."));
+			sb.append(fileName + "\t" + filePath + "\r\n");
+		}
 		FileUtils.write(new File(outPath), sb.toString(), encodingout);
 	}
 
-	public static XML readXML(List<String> readPaths, Element readArgs,
-			String outPath) throws Exception {
+	/**
+	 * 读取xml文件
+	 * 
+	 * @param readPaths
+	 *            所有的xml路径
+	 * @param readArgs
+	 *            xml读取的参数
+	 * @param outPath
+	 *            读取xml输出路径
+	 * @param xmlType
+	 *            0:普通xml读取方法，1：特殊xml读取方法
+	 * @return
+	 * @throws Exception
+	 */
+	public XMLProperty readXML(List<String> readPaths, Element readArgs, Element writeArgs, String outPath)
+			throws Exception {
 
 		// read
+		Elements readerEles = readArgs.select("reader");
 		Elements headerEles = readArgs.select("header");
 		Elements encInEles = readArgs.select("encoding-in");
 		Elements encOutEles = readArgs.select("encoding-out");
@@ -151,7 +197,8 @@ public class ConfigReader {
 		Elements existnodesEles = readArgs.select("existnodes");
 		Elements getFirstEles = readArgs.select("getfirst");
 
-		XML xml = new XML();
+		XMLProperty xmlProp = new XMLProperty();
+		String reader = readerEles.get(0).ownText().toLowerCase();
 		String header = null;
 		String encodingin = null;
 		String encodingout = null;
@@ -182,30 +229,82 @@ public class ConfigReader {
 		if (getFirstEles.size() > 0) {
 			getFirst = getFirstEles.get(0).ownText();
 		}
-
+		// header变为list
+		List<String> fieldList = Arrays.asList(header.trim().split(";"));
 		// change
 		boolean flag = false;
 		if ("1".equals(getFirst)) {
 			flag = true;
 		}
 
-		// read
-		xml.setHeader(header);
-		xml.setEncodingin(encodingin);
-		xml.setEncodingout(encodingout);
-		xml.setRootnode(rootnode);
-		xml.setTextnodes(textnodes);
-		xml.setExistNodes(existnodes);
-		xml.setIfGetFirst(flag);
+		// 放在xml的这个对象中
+		xmlProp.setFields(header);
+		xmlProp.setEncodingin(encodingin);
+		xmlProp.setEncodingout(encodingout);
+		xmlProp.setRootnode(rootnode);
+		xmlProp.setTextnodes(textnodes);
+		xmlProp.setExistNodes(existnodes);
+		xmlProp.setIfGetFirst(flag);
+		xmlProp.setPathReplace(baseDir);
 
-		XMLReader xmlReader = new XMLReader();
-		xmlReader.readXml(readPaths, xml, outPath);
-
-		return xml;
+		// write
+		String tableName = writeArgs.select("tablename").first().ownText().trim();
+		boolean useDB = true;
+		if (tableName == null || tableName.equals("")) {
+			useDB = false;
+		}
+		// 判断xml类型，选择方法
+		XMLReader xmlReader = null;
+		switch (reader) {
+		case "xml":
+			// 使用普通xml读取方法
+			xmlReader = new XMLReader(xmlProp);
+			break;
+		case "xmllinereader":
+			// 使用特殊的xml读取方法
+			xmlReader = new XMLLineReader(xmlProp);
+			break;
+		default:
+			System.err.println("未找到合适的解析器，当前解析器为" + reader);
+			break;
+		}
+		if (!useDB) {
+			// 不使用数据库
+			xmlReader.readXMLToFile(readPaths, outPath);
+		} else {
+			// 读写数据库的类
+			DBWriter<PatentPo> db = new DBWriter<PatentPo>();
+			// 获取数据库连接
+			Connection conn = DBUtil.getConn();
+			db.setConn(conn);
+			db.setTableName(tableName);
+			db.setFieldList(fieldList);
+			String sql = db.getPsSql();
+			System.out.println(sql);
+			
+			//开始入库
+			xmlReader.readXML2db(readPaths,db);
+			
+			// 关闭数据库连接
+			DBUtil.closeAll(null, null, conn);
+		}
+		return xmlProp;
 	}
 
-	public static NumberLst readTXT(List<String> readPaths, Element readArgs,
-			String outPath) throws IOException {
+	/**
+	 * 读取文本文件，按行读取
+	 * 
+	 * @param readPaths
+	 *            所有的xml路径
+	 * @param readArgs
+	 *            xml读取的参数
+	 * @param outPath
+	 *            读取xml输出路径
+	 * @return
+	 * @throws IOException
+	 */
+	public NumListProperty readTXT(List<String> readPaths, Element readArgs, Element writeArgs, String outPath)
+			throws IOException {
 		String header = readArgs.select("header").get(0).ownText();
 		String charsetIn = readArgs.select("encoding-in").get(0).ownText();
 		String charsetOut = readArgs.select("encoding-out").get(0).ownText();
@@ -215,7 +314,7 @@ public class ConfigReader {
 		String match = readArgs.select("match").get(0).ownText();
 		String rep = readArgs.select("rep").get(0).ownText();
 
-		NumberLst numLst = new NumberLst();
+		NumListProperty numLst = new NumListProperty();
 
 		numLst.setHeader(header);
 		numLst.setEncodingin(charsetIn);
@@ -225,34 +324,10 @@ public class ConfigReader {
 		numLst.setSep(sep);
 		numLst.setRe(match);
 		numLst.setRep(rep);
-		// read lst
+
+		// 读取号单
 		LstReader.read(readPaths, numLst, outPath);
 		System.out.println("输出：" + outPath);
 		return numLst;
-	}
-
-	public static SGM readSGM(Map<String, List<File>> map, Element readArgs,
-			String destDir) throws Exception {
-		SGM sgm = new SGM();
-		String header = readArgs.select("header").get(0).ownText();
-		String encodingin = readArgs.select("encoding-in").get(0).ownText();
-		String encodingout = readArgs.select("encoding-out").get(0).ownText();
-		String labels = readArgs.select("labels").get(0).ownText();
-		String dateLabel = readArgs.select("date-label").get(0).ownText();
-
-		// set to object
-		sgm.setHeader(header);
-		sgm.setEncodingin(encodingin);
-		sgm.setEncodingout(encodingout);
-		sgm.setLabels(labels);
-		sgm.setDateLabel(dateLabel);
-
-		for (String key : map.keySet()) {
-			String outname = destDir + key;
-			List<File> inFiles = map.get(key);
-			SGMReader.readSGM(inFiles, sgm, outname);
-			System.out.println("输出：" + key);
-		}
-		return sgm;
 	}
 }

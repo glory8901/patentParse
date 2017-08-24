@@ -1,15 +1,30 @@
 package typeobj;
 
-public class XML {
-	private String header;
+/**
+ * XML文件读取的一些特征
+ * 
+ * @author lenovo
+ *
+ */
+
+public class XMLProperty {
+	private String fields;
 	private String encodingin;
 	private String encodingout;
 	private String rootnode;
 	private String textnodes;
 	private String existNodes;
 	private boolean ifGetFirst;
-	
-	
+	private String pathReplace;
+
+	public String getPathReplace() {
+		return pathReplace;
+	}
+
+	public void setPathReplace(String pathReplace) {
+		this.pathReplace = pathReplace;
+	}
+
 	public boolean isIfGetFirst() {
 		return ifGetFirst;
 	}
@@ -18,12 +33,13 @@ public class XML {
 		this.ifGetFirst = ifGetFirst;
 	}
 
-	public String getHeader() {
-		return header;
+
+	public String getFields() {
+		return fields;
 	}
 
-	public void setHeader(String header) {
-		this.header = header;
+	public void setFields(String fields) {
+		this.fields = fields;
 	}
 
 	public String getEncodingin() {
