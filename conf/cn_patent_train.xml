@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<baseroot>
+		<basedir class="CN">D:\DATASET\发明点提取项目数据
+		</basedir>
+		<destdir>D:\Download\TEST\testout</destdir>
+		<tempdir>D:\Download\TEST\TEMP</tempdir>
+	</baseroot>
+
+	<branch>
+		<FileSearcher>
+			<AddPath class="CN"></AddPath>
+			<filter>
+				<!-- '&'表示同时满足的条件,多层查找; ';'表示包含任意一个即可的条件 -->
+				<incdir></incdir>
+				<excdir></excdir>
+				<incfile></incfile>
+				<excfile></excfile>
+				<extend>xml</extend>
+				<outfile>test_patent_xml.csv</outfile>
+			</filter>
+		</FileSearcher>
+		<TextReader>
+			<filetype>xml</filetype>
+			<reader>XMLLineReader</reader>
+			<header>pub_number;pub_country;kind;pub_date;app_country;app_number;app_date;ipc;title;abs;applicant_name;applicant_address;inventor;lang;description;technical_field;background_art;disclosure;description_of_drawings;mode_for_invention;claims;path</header>
+			<encoding-in>UTF-8</encoding-in>
+			<encoding-out>UTF-8</encoding-out>
+			<!-- 使用";"进行分隔 -->
+			<rootnode>cn-patent-document</rootnode>
+			<textnodes>cn-bibliographic-data>cn-publication-reference>document-id>doc-number;cn-bibliographic-data>cn-publication-reference>document-id>country;cn-bibliographic-data>cn-publication-reference>document-id>kind;cn-bibliographic-data>cn-publication-reference>document-id>date;cn-bibliographic-data>application-reference>document-id>country;cn-bibliographic-data>application-reference>document-id>doc-number;cn-bibliographic-data>application-reference>document-id>date;cn-bibliographic-data>classifications-ipcr>classification-ipcr>text;cn-bibliographic-data>invention-title;cn-bibliographic-data>abstract;cn-bibliographic-data>cn-parties>cn-applicants>cn-applicant>addressbook>name;cn-bibliographic-data>cn-parties>cn-applicants>cn-applicant>addressbook>address>text;cn-bibliographic-data>cn-parties>cn-inventors>cn-inventor>name;application-body@lang;application-body>description;application-body>description>technical-field;application-body>description>background-art;application-body>description>disclosure;application-body>description>description-of-drawings;application-body>description>mode-for-invention;application-body>claims>claim</textnodes>
+			<existnodes></existnodes>
+		</TextReader>
+		<Writer>
+			<!-- R_CN_PATENT -->
+			<tableName>R_CN_PATENT</tableName>
+		</Writer>
+	</branch>
+</root>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<baseroot>
+		<basedir class="CN">\\192.168.3.22\Research\中国专利深加工数据
+		</basedir>
+		<destdir>D:\Download\testout</destdir>
+		<tempdir>D:\Download\tempfiles\test</tempdir>
+	</baseroot>
+
+	<branch>
+		<FileSearcher>
+			<!-- 相对路径或者绝对路径。如果是相对路径，则追加到basedir;否则直接使用该路径 -->
+			<AddPath class="CN">\FM</AddPath>
+			<filter>
+				<!-- '&'表示同时满足的条件,多层查找; ';'表示包含任意一个即可的条件 -->
+				<incdir></incdir>
+				<!-- 排除列表，用;分割,表示或的关系 -->
+				<excdir></excdir>
+				<!-- 包含文件列表，用;分割,表示或的关系 -->
+				<incfile>cn-rewritten-abstract-title-data</incfile>
+				<!-- 排除文件列表，用;分割，表示排除列表中所有内容 -->
+				<excfile></excfile>
+				<!-- 包含的扩展名列表，用;分割，表示或的关系 -->
+				<extend>xml</extend>
+				<!-- 输出为csv文件 -->
+				<outfile>cn_rw_abs_title_FM.csv</outfile>
+			</filter>
+		</FileSearcher>
+		<TextReader>
+			<filetype>xml</filetype>
+			<reader>ilxml</reader>
+			<header>country,doc_number,invention_title,abst_problem,abst_solution,abst_active,abst_actmode,abst_drug,abst_usefor,abst_addinfo,path
+			</header>
+			<encoding-in>GBK</encoding-in>
+			<encoding-out>UTF-8</encoding-out>
+			<!-- 使用";"进行分隔 -->
+			<rootnode>cn-rewritten-abstract-title</rootnode>
+			<textnodes>application-reference>document-id>country;application-reference>document-id>doc-number;cn-rewritten-invention-title>invention-title;cn-rewritten-abstract>abst-problem>p;cn-rewritten-abstract>abst-solution>p;cn-rewritten-abstract>cn-abst-active;cn-rewritten-abstract>cn-abst-actmode;cn-rewritten-abstract>cn-abst-drug;cn-rewritten-abstract>cn-abst-usefor;cn-rewritten-abstract>cn-abst-addinfo
+			</textnodes>
+			<existnodes></existnodes>
+		</TextReader>
+	</branch>
+	<branch>
+		<FileSearcher>
+			<!-- 相对路径或者绝对路径。如果是相对路径，则追加到basedir;否则直接使用该路径 -->
+			<AddPath class="CN">\SQ</AddPath>
+			<filter>
+				<!-- '&'表示同时满足的条件,多层查找; ';'表示包含任意一个即可的条件 -->
+				<incdir></incdir>
+				<!-- 排除列表，用;分割,表示或的关系 -->
+				<excdir></excdir>
+				<!-- 包含文件列表，用;分割,表示或的关系 -->
+				<incfile>cn-rewritten-abstract-title-data</incfile>
+				<!-- 排除文件列表，用;分割，表示排除列表中所有内容 -->
+				<excfile></excfile>
+				<!-- 包含的扩展名列表，用;分割，表示或的关系 -->
+				<extend>xml</extend>
+				<!-- 输出为csv文件 -->
+				<outfile>cn_rw_abs_title_SQ.csv</outfile>
+			</filter>
+		</FileSearcher>
+		<TextReader>
+			<filetype>xml</filetype>
+			<reader>ilxml</reader>
+			<header>country,doc_number,invention_title,abst_problem,abst_solution,abst_active,abst_actmode,abst_drug,abst_usefor,abst_addinfo,path
+			</header>
+			<encoding-in>GBK</encoding-in>
+			<encoding-out>UTF-8</encoding-out>
+			<!-- 使用";"进行分隔 -->
+			<rootnode>cn-rewritten-abstract-title</rootnode>
+			<textnodes>application-reference>document-id>country;application-reference>document-id>doc-number;cn-rewritten-invention-title>invention-title;cn-rewritten-abstract>abst-problem>p;cn-rewritten-abstract>abst-solution>p;cn-rewritten-abstract>cn-abst-active;cn-rewritten-abstract>cn-abst-actmode;cn-rewritten-abstract>cn-abst-drug;cn-rewritten-abstract>cn-abst-usefor;cn-rewritten-abstract>cn-abst-addinfo
+			</textnodes>
+			<existnodes></existnodes>
+		</TextReader>
+	</branch>
+</root>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<baseroot>
+		<basedir class="KR">H:\数据解析\解压结果
+		</basedir>
+		<destdir>D:\Download\testout</destdir>
+		<tempdir>D:\Download\tempfiles\test</tempdir>
+	</baseroot>
+
+	<branch>
+		<FileSearcher>
+			<!-- 相对路径或者绝对路径。如果是相对路径，则追加到basedir;否则直接使用该路径 -->
+			<AddPath class="KR"></AddPath>
+			<filter>
+				<!-- '&'表示同时满足的条件,多层查找; ';'表示包含任意一个即可的条件 -->
+				<incdir></incdir>
+				<!-- 排除列表，用;分割,表示或的关系 -->
+				<excdir></excdir>
+				<!-- 包含文件列表，用;分割,表示或的关系 -->
+				<incfile></incfile>
+				<!-- 排除文件列表，用;分割，表示排除列表中所有内容 -->
+				<excfile></excfile>
+				<!-- 包含的扩展名列表，用;分割，表示或的关系 -->
+				<extend>pdf</extend>
+				<!-- 输出为csv文件 -->
+				<outfile>test_out_pdf.csv</outfile>
+			</filter>
+		</FileSearcher>
+		<TextReader>
+			<filetype>pdf</filetype>
+			<reader>path</reader>
+			<header>filename,path
+			</header>
+			<encoding-in>UTF-8</encoding-in>
+			<encoding-out>UTF-8</encoding-out>
+			<!-- 使用";"进行分隔 -->
+			<rootnode></rootnode>
+			<textnodes></textnodes>
+			<existnodes></existnodes>
+		</TextReader>
+	</branch>
+</root>
